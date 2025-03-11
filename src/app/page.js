@@ -88,7 +88,7 @@ export default function Home() {
                         </a>
                         <div className="flex items-center justify-between">
                             <p>
-                                <span className="text-lg">How we`&apos;`re making more than hot leaf juice.</span>
+                                <span className="text-lg">How we&apos;re making more than hot leaf juice.</span>
                             </p>
                         </div>
                     </div>
