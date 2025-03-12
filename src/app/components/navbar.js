@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect } from 'react';
-import { toggleNavbarMenu } from '../../utils/navbarToggle';  // Update the import path if needed
+import { toggleNavbarMenu } from '../../utils/navbarToggle';
 
 export default function Navbar() {
     useEffect(() => {
-        toggleNavbarMenu();  // Initialize navbar toggle logic
+        toggleNavbarMenu();
     }, []);
 
     return (
