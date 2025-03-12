@@ -178,7 +178,7 @@ input:focus {
 }
 @font-face {
   font-family: "Sentient";
-  src: url("/fonts/sentient-bold.otf") format("opentype");
+  src: url("/fonts/Sentient-Bold.otf") format("opentype");
 }
 .Sentient {
   font-family: "Sentient", serif;
