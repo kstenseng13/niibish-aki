@@ -13,7 +13,7 @@ export default function Home() {
                     </div>
                 </div>
             </header>
-            <div className="bg-skyBlue h-12 w-full"></div>
+            <div className="bg-matchaDark h-12 w-full"></div>
 
             <section id="joinRewardsSection"
                 className="bg-[linear-gradient(to_right_bottom,rgba(202,211,156,0.9),rgba(244,246,244,0.9)),url('https://www.creativefabrica.com/wp-content/uploads/2023/02/26/Wildflowers-Of-The-Pacific-Northwest-Digital-Graphic-62492445-1.png')] p-16 flex flex-wrap justify-center"
@@ -23,7 +23,7 @@ export default function Home() {
                         <span className="text-5xl font-bold">a free drink is steps away</span>
                     </div>
                     <div className="pt-8">
-                        <span className="text-2xl font-semibold">sign up for Dragon Rewards and get one after your first
+                        <span className="text-2xl font-semibold">sign up for Leaf Rewards and get one after your first
                             purchase</span>
                     </div>
                 </div>
@@ -59,19 +59,19 @@ export default function Home() {
                         <div className="flex items-start mb-5">
                             <div className="flex items-center h-5">
                                 <input id="terms" name="terms" type="checkbox" value=""
-                                    className="w-4 h-4 accent-pink-600 border border-gray-300 rounded bg-stone-0 focus:ring-3 focus:ring-pink-900 shadow-sm"
+                                    className="w-4 h-4 accent-amber-600 border border-gray-300 rounded bg-stone-0 focus:ring-3 focus:ring-amber-900 shadow-sm"
                                     required aria-required="true"></input>
                             </div>
                             <label htmlFor="terms" className="ms-2 text-sm font-medium">I agree with the <a href="/pages/terms.html"
-                                className="text-pink-600 hover:underline hover:text-pink-700">terms and conditions</a></label>
+                                className="text-amber-600 hover:underline hover:text-amber-700">terms and conditions</a></label>
                         </div>
                         <button type="submit" id="login" name="joinRewards"
-                            className="text-white shadow-md bg-pink-600 hover:bg-pink-700 focus:ring-4 focus:outline-none focus:ring-pink-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
-                            Join Dragon Rewards</button>
+                            className="text-white shadow-md bg-amber-600 hover:bg-amber-700 focus:ring-4 focus:outline-none focus:ring-amber-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+                            Join Leaf Rewards</button>
                     </form>
                 </div>
             </section>
-            <div className="bg-matcha h-12">
+            <div className="bg-salmonDark h-12">
             </div>
             <div id="callToAction" aria-live="polite" aria-label="Call to Action Section"></div>
 
@@ -95,8 +95,7 @@ export default function Home() {
                 </section>
                 <section className="my-0 md:my-16 bg-whiteSmoke productCard" id="seasonalSelectionsCard">
                     <a href="#"><img className="productCardImage"
-                        src="https://japantoday-asset.scdn3.secure.raxcdn.com/img/store/41/2a/92968e7385db3e8b9b05dfffa14f9eacd6e2/sakura-boba-cherry-blossom-bubble-tea/_w1700.png"
-                        alt="[Sakura Boba Cherry Blossom Bubble Tea].(2020, February 28). Sakura Boba Cherry Blossom Bubble Tea [Digital image]. Retrieved from URL https://japantoday.com/category/features/food/bubble-tea-stand-debuting-real-sakura-tapioca-for-cherry-blossom-strawberry-milk-boba"></img>
+                        src="https://prtimes.jp/i/33644/32/resize/d33644-32-172195-0.jpg"></img>
                     </a>
                     <div className="mt-4 px-5 pb-5">
                         <a href="#">

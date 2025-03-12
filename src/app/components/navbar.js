@@ -28,7 +28,7 @@ export default function Navbar() {
                             className="w-10 pr-2"></img>
                     </button>
                 </div>
-                <div className="hidden navBarMenu lg:block lg:text-xl hover:text-black shadow-md bg-stone-50 hover:bg-pink-50 focus:ring-4 focus:outline-none rounded-lg py-2.5" id="navbarOrder">
+                <div className="hidden navBarMenu lg:block lg:text-xl hover:text-black shadow-md bg-amber-50 hover:bg-amber-50 focus:ring-4 focus:outline-none rounded-lg py-2.5" id="navbarOrder">
                     <a href="/pages/products.html">Order Now</a>
                 </div>
                 <div className="hidden navBarMenu lg:block lg:text-xl hover:text-stone-950" id="navbarLogin">
