@@ -2,8 +2,7 @@ import Image from "next/image";
 
 export default function Home() {
     return (
-        <div className="">
-
+        <div>
             <header
                 className="bg-no-repeat bg-right bg-cover 2xl:bg-bottom bg-[url('https://cdn.pixabay.com/photo/2020/08/12/01/06/forest-5481346_1280.jpg')] w-full" alt="PUT CREDS.">
                 <div className="displayHeader text-yellow-50 headerSizing  bg-gradient-to-r from-stone-900/80">
