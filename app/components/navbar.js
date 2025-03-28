@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from 'react';
-import { toggleNavbarMenu } from '../../utils/navbarToggle';
+import { toggleNavbarMenu } from "../utils/navbarToggle.js";
 
 export default function Navbar() {
     useEffect(() => {
@@ -28,7 +28,7 @@ export default function Navbar() {
                             className="w-10 pr-2"></img>
                     </button>
                 </div>
-                <div className="hidden navBarMenu lg:block lg:text-xl hover:text-black shadow-md bg-amber-50 hover:bg-amber-50 focus:ring-4 focus:outline-none rounded-lg py-2.5" id="navbarOrder">
+                <div className="hidden navBarMenu lg:block lg:text-xl hover:text-black shadow-md bg-orange-50 hover:bg-orange-100 focus:ring-4 focus:outline-none rounded-lg py-2.5" id="navbarOrder">
                     <a href="/pages/products.html">Order Now</a>
                 </div>
                 <div className="hidden navBarMenu lg:block lg:text-xl hover:text-stone-950" id="navbarLogin">
@@ -45,10 +45,10 @@ export default function Navbar() {
             </nav>
             <nav id="mobileMenu" className="hidden lg:hidden w-full bg-whiteSmoke">
                 <ul>
-                    <li className="text-2xl py-8 mx-4 font-semibold border-b border-gray-300"><a href="/pages/products.html">Order Now</a></li>
-                    <li className="text-2xl py-8 mx-4 font-semibold border-b border-gray-300"><a href="/pages/login.html">Login</a></li>
-                    <li className="text-2xl py-8 mx-4 font-semibold border-b border-gray-300"><a href="/pages/aboutUs.html">About Us</a></li>
-                    <li className="text-2xl py-8 mx-4 font-semibold border-b border-gray-300"><a href="/pages/cart.html">Cart</a></li>
+                    <li className="text-2xl py-8 px-4 font-semibold border-b border-amber-700/15 hover:bg-amber-700/10" ><a href="/pages/products.html" className="block w-full h-full">Order Now</a></li>
+                    <li className="text-2xl py-8 px-4 font-semibold border-b border-amber-700/15 hover:bg-amber-700/10"><a href="/pages/login.html" className="block w-full h-full">Login</a></li>
+                    <li className="text-2xl py-8 px-4 font-semibold border-b border-amber-700/15 hover:bg-amber-700/10"><a href="/pages/aboutUs.html" className="block w-full h-full">About Us</a></li>
+                    <li className="text-2xl py-8 px-4 font-semibold border-b border-amber-700/15 hover:bg-amber-700/10"><a href="/pages/cart.html" className="block w-full h-full">Cart</a></li>
                 </ul>
             </nav>
         </div>

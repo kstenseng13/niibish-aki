@@ -67,7 +67,7 @@ export default function Footer() {
                     </div>
                 </div>
                 <div className="text-center p-3 bg-teal">
-                    <span>© 2024 Copyright:</span>
+                    <span>© 2025 Copyright:</span>
                     <span className="font-semibold">Niibish Aki</span>
                 </div>
             </div>

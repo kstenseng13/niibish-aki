@@ -27,33 +27,35 @@ export default function Home() {
                     </div>
                 </div>
                 <div className="shrink basis-3/4 lg:basis-1/3">
+                    <h2 id="register" className="sr-only">Register for an account</h2>
                     <form aria-labelledby="register">
                         <div>
-                            <div className="inline-block mb-5 w-full xl:w-[49%]">
-                                <label htmlFor="firstName" className="block mb-2 text-sm font-medium">First</label>
-                                <input type="text" id="firstName" name="firstName" className="p-2.5" placeholder="Jane" required aria-required="true"></input>
+                            <div className="inline-block mb-5 mr-1 w-full xl:w-[49%]">
+                                <label htmlFor="firstName" className="block mb-2 text-sm font-medium">First Name</label>
+                                <input type="text" id="firstName" name="firstName" className="p-2.5" placeholder="Jane" required />
                             </div>
                             <div className="inline-block mb-5 w-full xl:w-1/2">
-                                <label htmlFor="lastName" className="block mb-2 text-sm font-medium">Last</label>
-                                <input type="text" id="lastName" name="lastName" className="p-2.5" placeholder="Smith" required aria-required="true"></input>
+                                <label htmlFor="lastName" className="block mb-2 text-sm font-medium">Last Name</label>
+                                <input type="text" id="lastName" name="lastName" className="p-2.5" placeholder="Smith" required />
                             </div>
                         </div>
                         <div className="mb-5">
                             <label htmlFor="telephone" className="block mb-2 text-sm font-medium">Phone Number</label>
                             <input type="tel" id="telephone" name="telephone" className="p-2.5"
-                                pattern="^\(?[0-9]{3}\)?-?[0-9]{3}-?[0-9]{4}" placeholder="(800)-123-4567" required aria-required="true"></input>
+                                pattern="^\(?[0-9]{3}\)?-?[0-9]{3}-?[0-9]{4}" placeholder="(800)-123-4567"
+                                aria-describedby="telephone" required />
                         </div>
                         <div className="mb-5">
-                            <label htmlFor="email" className="block mb-2 text-sm font-medium">Email</label>
-                            <input type="email" id="email" name="email" className="p-2.5" placeholder="name@email.com" required aria-required="true"></input>
+                            <label htmlFor="email" className="block mb-2 text-sm font-medium">Email Address</label>
+                            <input type="email" id="email" name="email" className="p-2.5" placeholder="name@email.com" required />
                         </div>
                         <div className="mb-5">
                             <label htmlFor="password" className="block mb-2 text-sm font-medium">Password</label>
-                            <input type="password" id="password" name="password" className="p-2.5" placeholder="**********" required aria-required="true"></input>
+                            <input type="password" id="password" name="password" className="p-2.5" placeholder="**********" required />
                         </div>
                         <div className="mb-5">
-                            <label htmlFor="repeat-password" className="block mb-2 text-sm font-medium">Confirm password</label>
-                            <input type="password" id="repeat-password" name="repeat-password" className="p-2.5" placeholder="**********" required aria-required="true"></input>
+                            <label htmlFor="repeat-password" className="block mb-2 text-sm font-medium">Confirm Password</label>
+                            <input type="password" id="repeat-password" name="repeat-password" className="p-2.5" placeholder="**********" required />
                         </div>
                         <div className="flex items-start mb-5">
                             <div className="flex items-center h-5">
@@ -69,6 +71,7 @@ export default function Home() {
                             Join Leaf Rewards</button>
                     </form>
                 </div>
+
             </section>
             <div className="bg-salmonDark h-12">
             </div>
