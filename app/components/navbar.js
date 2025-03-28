@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { toggleNavbarMenu } from "../utils/navbarToggle.js";
+import Link from 'next/link';
 
 export default function Navbar() {
     useEffect(() => {
@@ -13,9 +14,9 @@ export default function Navbar() {
             <nav className="navBarContainer">
                 <div className="m-auto w-96 basis-2/3 ">
                     <div className="ml-4 sentient">
-                        <a href="./index.html">
+                        <Link href="/">
                             <h1>Niibish Aki</h1>
-                        </a>
+                        </Link>
                     </div>
                     <div className="italic ml-20">
                         <span>Tea of the Earth</span>
@@ -35,7 +36,7 @@ export default function Navbar() {
                     <a href="/pages/login.html">Login</a>
                 </div>
                 <div className="hidden navBarMenu lg:block lg:text-xl hover:text-stone-950" id="navbarAboutUs">
-                    <a href="/pages/aboutUs.html">About Us</a>
+                    <a href="/aboutUs">About Us</a>
                 </div>
                 <div className="hidden navBarMenu lg:block lg:text-xl hover:text-stone-950" id="navbarCart">
                     <a href="/pages/cart.html"><img src="https://cdn.iconscout.com/icon/free/png-512/free-shopping-cart-icon-download-in-svg-png-gif-file-formats--trolley-online-user-interface-pack-icons-1502238.png?f=webp&w=256"
