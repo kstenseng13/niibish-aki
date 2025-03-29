@@ -6,63 +6,48 @@ export default function Terms() {
             <NonfunctionalHeader title="Niibish Aki Terms and Conditions" />
 
             <div className="bg-teal h-12"></div>
-
             <div className="bg-whiteSmoke justify-center flex flex-wrap w-full p-8">
                 <div className="w-7/12">
                     <p className="text-lg font-semibold">Updated: March 28, 2025</p>
+
                     <p className="py-4">
-                        <span className="font-semibold pr-1">How to join the program/how to become a Leaf Rewards member:</span>
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin nunc felis, sagittis semper imperdiet at,
-                        vehicula nec augue. In sed lobortis magna. Suspendisse mattis
-                        condimentum risus, a euismod tellus ultrices sed. Cras at dui ut eros ullamcorper placerat. Etiam quis
-                        condimentum metus. Aliquam nec ante ut lectus aliquet bibendum vel ut
-                        dui. Praesent a risus at ligula convallis tristique. Nam aliquam elementum elit. <span
-                            className="font-semibold px-1">Eligibility:</span>Vestibulum tincidunt sagittis vulputate. Curabitur at
-                        gravida neque. Aliquam erat volutpat.
-                        Sed vel malesuada lectus, at consequat tortor. Vivamus ut elit nunc. Proin rhoncus elementum diam ut
-                        rhoncus. Aliquam elit magna, commodo ac quam vel, fringilla malesuada
-                        mauris. Mauris ullamcorper odio sed sem lobortis congue. Maecenas efficitur accumsan elementum. Nam
-                        lacinia iaculis odio, sit amet eleifend nulla suscipit et.
+                        <span className="font-semibold pr-1">How to Join the Program / How to Become a Leaf Rewards Member:</span>
+                        To join the Niibish Aki Leaf Rewards program, simply create an account on our website or sign up during checkout. 
+                        As a member, you will earn points on every purchase you make. These points can be redeemed for discounts, exclusive offers, and special gifts. 
+                        Signing up is free, and there are no fees. Membership is open to anyone who enjoys our products and supports our commitment to expanding Indigenous cultures to our community..
                     </p>
+
                     <p className="py-4">
-                        <span className="font-semibold pr-1">How the program works: </span>Vestibulum placerat condimentum augue,
-                        non rhoncus libero interdum nec. Donec at nulla eu dui sollicitudin venenatis in ut eros. In at
-                        consectetur dolor. Curabitur eu quam
-                        id elit laoreet hendrerit. Duis consequat tristique neque et tristique. Mauris malesuada odio metus, non
-                        sagittis orci elementum sed. <span className="font-semibold px-1">Earning points: </span>
-                        Donec pellentesque fringilla mi. Sed id libero a elit posuere tincidunt a vitae felis. Etiam posuere
-                        velit placerat nulla sagittis fringilla. Sed blandit mi ac tortor pretium facilisis. In non egestas
-                        purus, in
-                        laoreet nulla. Aliquam mollis eu neque sit amet interdum. Cras egestas tortor efficitur lectus lobortis
-                        sollicitudin. <span className="font-semibold px-1">Redeeming points: </span> Aliquam diam quam, posuere at
-                        ullamcorper sed, molestie
-                        quis neque. Proin sed sollicitudin tortor. Donec ex lectus, pellentesque eu dolor nec, lacinia sodales
-                        nisl. Nam interdum diam arcu, ac dapibus velit tempor et. Ut at lectus
-                        et nulla hendrerit maximus. Nunc at eros dui. Maecenas varius fringilla euismod.
+                        <span className="font-semibold pr-1">Eligibility:</span> To participate in the Leaf Rewards program, you must be at least 18 years old and reside within the county where we operate. 
+                        Membership is limited to individuals, and businesses or organizations are not eligible to join. Additionally, to maintain the integrity of the program, 
+                        members must comply with all applicable terms and conditions.
                     </p>
+
                     <p className="py-4">
-                        <span className="font-semibold pr-1">Bonus Points and Exclusive Offers: </span>Pellentesque vestibulum, orci
-                        non ullamcorper lobortis, sapien mi congue magna, venenatis pulvinar enim est in felis. Cras at ante
-                        faucibus, hendrerit massa vitae, gravida
-                        nisi. Nulla facilisi. Praesent lobortis viverra purus, tempor rhoncus mi malesuada nec. Suspendisse a
-                        massa dictum, facilisis ante sed, tristique mi. In dapibus varius
-                        elementum. Proin quis tellus vitae diam vestibulum feugiat eget placerat lacus. Sed leo lorem, efficitur
-                        vel tempus feugiat, consequat id eros. Cras dapibus pharetra est,
-                        eget commodo neque dictum quis. Aenean gravida felis lectus, a mattis erat tincidunt at. Donec euismod
-                        cursus felis, id hendrerit augue interdum ut. Ut sapien ipsum, placerat
-                        id dui at, commodo iaculis sem.
+                        <span className="font-semibold pr-1">How the Program Works:</span> The Leaf Rewards program allows members to earn points with every purchase. 
+                        For every dollar spent on eligible products, you will earn 1 Leaf Point. Points can be redeemed for discounts, products, and exclusive offers at Niibish Aki.
+                        <span className="font-semibold px-1">Earning Points:</span> Members earn points by purchasing products from our website or at our physical store. 
+                        Additional points can be earned through special promotions, events, and referrals. You can track your points balance and progress toward rewards directly from your account page.
                     </p>
+
                     <p className="py-4">
-                        <span className="font-semibold pr-1">Additional Terms: </span>Morbi vulputate, augue eu rhoncus fermentum,
-                        ipsum mi mollis dui, at tincidunt nibh odio laoreet quam. Curabitur commodo nulla a sem iaculis auctor.
-                        Pellentesque porta
-                        porttitor lorem, et lobortis lorem. Vestibulum dapibus lacus vitae rhoncus scelerisque. Donec enim
-                        mauris, congue non dui eu, euismod blandit risus. Vestibulum a augue
-                        commodo, accumsan ligula ut, aliquet massa. Sed et placerat velit, non posuere massa. Pellentesque
-                        auctor, erat sit amet condimentum rutrum, sapien metus hendrerit eros,
-                        sed pretium quam metus in justo. Nulla lobortis nibh turpis, eget mattis mi volutpat ut. Orci varius
-                        natoque penatibus et magnis dis parturient montes, nascetur ridiculus
-                        mus.
+                        <span className="font-semibold pr-1">Redeeming Points:</span> Points can be redeemed at checkout for discounts or exclusive rewards. 
+                        A point is worth $1 USD, and you can redeem them in increments of 100 points for a $1 discount. Points cannot be exchanged for cash, nor can they be transferred to other accounts.
+                        We also offer members the opportunity to donate points to support environmental or community initiatives that align with our sustainable mission.
+                    </p>
+
+                    <p className="py-4">
+                        <span className="font-semibold pr-1">Bonus Points and Exclusive Offers:</span> Occasionally, we offer bonus points and exclusive promotions to our members. 
+                        These can include double-point events, early access to new products, or limited-edition items made from sustainably sourced materials. 
+                        You will be notified about these special offers through our email newsletter and on your account page. 
+                        Be sure to check your inbox for updates on how to earn and redeem bonus points.
+                    </p>
+
+                    <p className="py-4">
+                        <span className="font-semibold pr-1">Additional Terms:</span> Points expire if there is no activity (purchases or point redemptions) within 12 months. 
+                        We reserve the right to cancel or modify the Leaf Rewards program at any time, and we may adjust how points are earned or redeemed. 
+                        Points are non-transferable and cannot be shared between accounts. The program is subject to applicable laws, and Niibish Aki is not responsible for lost or stolen points.
+                        Members must maintain accurate and up-to-date contact information to receive all the benefits and updates of the program.
                     </p>
                 </div>
             </div>
@@ -70,7 +55,9 @@ export default function Terms() {
             <div className="bg-salmonDark h-12"></div>
             <div aria-label="Featured Products">
                 <h2 className="text-center mt-4">Explore Our Featured Products</h2>
-                <div id="featuredProductsSection" className="productSection justify-center" aria-live="polite">TODO: ADD FEATURED ITEMS SECTION</div>
+                <div id="featuredProductsSection" className="productSection justify-center" aria-live="polite">
+                    {/* TODO: Add Featured Products Section */}
+                </div>
             </div>
         </div>
     );
