@@ -31,7 +31,7 @@ export default function Navbar() {
                     </button>
                 </div>
                 <div className="hidden navBarMenu lg:block lg:text-xl hover:text-black shadow-md bg-orange-50 hover:bg-orange-100 focus:ring-4 focus:outline-none rounded-lg py-2.5" id="navbarOrder">
-                    <a href="/products">Order Now</a>
+                    <a href="/menu">Order Now</a>
                 </div>
                 <div className="hidden navBarMenu lg:block lg:text-xl hover:text-stone-950" id="navbarLogin">
                     <a href="/login">Login</a>

@@ -3,7 +3,7 @@
 export default function OrderItem({ orderItem }) {
     return (
         <section className="m-2 lg:mt-8 lg:mx-12 ml-0 border border-stone-800 flex flex-wrap" id="orderSummaryItem">
-            <div className="m-2 lg:m-4 lg:m-6 inline-block align-top">
+            <div className="m-2 lg:m-6 inline-block align-top">
                 <img 
                     className="bg-cover w-28 h-28 lg:w-36 lg:h-36"
                     src={orderItem.imagePath} 

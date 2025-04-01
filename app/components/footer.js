@@ -13,8 +13,8 @@ export default function Footer() {
                             </h6>
                             <p>
                                 At Niibish Aki, we combine traditional Asian tea culture with Indigenous ingredients to create unique, flavorful experiences. 
-                                Rooted in the Ojibwe language, our name, Niibish Aki, means "Tea of the Earth," which reflects our deep connection to nature and community.
-                                We're passionate about sharing stories and flavors that celebrate our heritage and bring Indigenous representation to Grand Forks, ND.
+                                Rooted in the Ojibwe language, our name, Niibish Aki, means “Tea of the Earth,” which reflects our deep connection to nature and community.
+                                We are passionate about sharing stories and flavors that celebrate our heritage and bring Indigenous representation to Grand Forks, ND.
                             </p>
                         </div>
                         <div>
@@ -57,7 +57,7 @@ export default function Footer() {
                             <p className="flex items-center justifyCss mb-4">
                                 <Image width={24} height={24} src="https://cdn.iconscout.com/icon/free/png-512/free-email-1767971-1502307.png?f=webp&w=256"
                                     alt="Akveo (Creator).(2019, July 30). Free Email Icon [Digital image]. Retrieved from URL https://iconscout.com/free-icon/email-1767971" className="w-8 pr-2"/>
-                                <a href="mailto:hello@niibishaki.com">hello@niibishaki.com</a>
+                                <a href="mailto:hello@niibishaki.com">hello@niibish-aki.com</a>
                             </p>
                             <p className="flex items-center justifyCss mb-4">
                                 <Image width={24} height={24} src="https://cdn.iconscout.com/icon/free/png-512/free-phone-1768011-1502185.png?f=webp&w=256"

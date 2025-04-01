@@ -24,7 +24,7 @@ export default function Register() {
                     <div className="h-screen w-full"></div>
                 </div>
             </div>
-            <div className="bg-salmonDark h-12"></div>
+            <div className="bg-matchaDark h-12"></div>
         </div>
     );
 };
