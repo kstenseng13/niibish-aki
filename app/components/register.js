@@ -96,7 +96,11 @@ export default function RegisterForm() {
                 }
 
                 // Update user data
-                const userData = { username: formData.username };
+                const userData = { firstName: formData.firstName,
+                    lastName: formData.lastName,
+                    username: formData.username,
+                    email: formData.email,
+                    phoneNumber : formData.phoneNumber };
 
                 // Log user in
                 login(userData);
