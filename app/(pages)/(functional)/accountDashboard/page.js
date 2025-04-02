@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useUser } from "../../context/userContext";
+import { useUser } from "../../../context/userContext";
 import AccountSettings from "./AccountSettings";
 import OrderHistory from "./OrderHistory";
 import UserAddress from "./UserAddress";

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import OrderItem from "../../components/orderItem";
+import OrderItem from "../../../components/orderItem";
 
 export default function Cart() {
     const [orderItems, setOrderItems] = useState([]);

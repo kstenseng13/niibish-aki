@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect } from 'react';
-import { useUser } from "../context/userContext"; // Import useUser to check login state
-import { toggleNavbarMenu } from "../utils/navbarToggle.js";
+import { useUser } from '../context/userContext';
+import { toggleNavbarMenu } from '../_utils/navbarToggle';
 import Link from 'next/link';
 import Image from 'next/image';
 
