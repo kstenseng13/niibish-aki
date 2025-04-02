@@ -1,8 +1,8 @@
 import { MongoClient } from "mongodb";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import logger from "../../../lib/dnaLogger"; // Import Mezmo logger
 import { loadEnvConfig } from '@next/env';
+import logger from "@/lib/dnaLogger";
 loadEnvConfig(process.cwd()); 
 
 
