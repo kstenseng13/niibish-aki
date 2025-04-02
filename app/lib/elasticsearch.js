@@ -1,3 +1,5 @@
+import dotenv from 'dotenv';
+dotenv.config();
 import { Client } from '@elastic/elasticsearch';
 
 // Initialize the Elasticsearch client with your Bonsai URL from the environment variables

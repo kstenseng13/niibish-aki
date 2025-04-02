@@ -2,14 +2,18 @@
   "name": "niibish-aki",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
     "@elastic/elasticsearch": "^8.17.1",
+    "bcryptjs": "^3.0.2",
+    "dotenv": "^16.4.7",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.15.0",
     "next": "^15.2.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
