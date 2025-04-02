@@ -2,7 +2,7 @@ import { MongoClient } from "mongodb";
 import bcrypt from "bcryptjs";
 import { loadEnvConfig } from "@next/env";
 import logger from "@/lib/dnaLogger.js";
-import { verifyToken } from "@/utils/auth.js";
+import { verifyToken } from "../../../_utils/auth.js";
 
 loadEnvConfig(process.cwd());
 
