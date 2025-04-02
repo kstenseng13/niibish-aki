@@ -1,7 +1,7 @@
 import { MongoClient } from "mongodb";
 import bcrypt from "bcryptjs";
-import logger from "../../../lib/dnaLogger";
 import { loadEnvConfig } from '@next/env';
+import logger from "@/lib/dnaLogger";
 loadEnvConfig(process.cwd()); 
 
 const uri = process.env.MONGODB_URI;

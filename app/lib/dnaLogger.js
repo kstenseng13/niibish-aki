@@ -5,6 +5,6 @@ const options = {
     env: process.env.NODE_ENV || 'production'
 };
 
-const logger = logdna.createLogger(process.env.LOGDNA_INGESTION_KEY, options);
+const logger = logdna.createLogger(process.env.LOGDNA_KEY, options);
 
-module.exports = logger;
+export default logger;
