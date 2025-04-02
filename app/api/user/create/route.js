@@ -1,22 +1,25 @@
 import { MongoClient } from "mongodb";
 import bcrypt from "bcryptjs";
-//import BonsaiLogger from "../../../lib/bonsailogger.js";
+import logger from "../../../lib/dnaLogger";
 import { loadEnvConfig } from '@next/env';
 loadEnvConfig(process.cwd()); 
-
 
 const uri = process.env.MONGODB_URI;
 
 export async function POST(req) {
     try {
+        logger.info("POST request received for user creation.");
+
         // Check if the request contains an Authorization header with a Bearer token
         const authHeader = req.headers.get("Authorization");
         if (!authHeader) {
+            logger.warn("Authorization header missing.");
             return new Response(JSON.stringify({ message: "Authorization header missing" }), { status: 403 });
         }
 
         const token = authHeader.split(" ")[1];  // Extract token from Bearer token
         if (!token) {
+            logger.warn("Token missing.");
             return new Response(JSON.stringify({ message: "Token missing" }), { status: 403 });
         }
 
@@ -25,22 +28,24 @@ export async function POST(req) {
         try {
             decoded = verifyToken(token);  // Decodes the JWT and returns the payload
         } catch (error) {
+            logger.error(`Invalid or expired token: ${error.message}`);
             return new Response(JSON.stringify({ message: "Invalid or expired token" }), { status: 403 });
         }
 
-        // If the token is valid, the user is authenticated and we can proceed
-        console.log("Authenticated user:", decoded);
+        logger.info(`Authenticated user: ${decoded.username}`);
 
         // Proceed with user creation logic
         const { user } = await req.json();
 
         if (!user) {
-            //await BonsaiLogger("ERROR: User data is required!");
+            logger.error("User data is required!");
             return new Response(JSON.stringify({ message: "User data is required!" }), { status: 400 });
         }
 
         const client = new MongoClient(uri);
         await client.connect();
+        logger.info("Connected to MongoDB.");
+
         const database = client.db("niibish-aki");
         const collection = database.collection("users");
 
@@ -50,7 +55,7 @@ export async function POST(req) {
         });
 
         if (existingUser) {
-            //await BonsaiLogger(`WARNING: Username or email already exists! User: ${user.username}`);
+            logger.warn(`Username or email already exists: ${user.username}`);
             return new Response(JSON.stringify({ message: "Username or email already exists!" }), { status: 409 });
         }
 
@@ -63,23 +68,24 @@ export async function POST(req) {
         });
 
         await client.close();
+        logger.info("MongoDB connection closed.");
 
         if (!dbResponse.acknowledged) {
-            //await BonsaiLogger("ERROR: Failed to save user!");
+            logger.error("Failed to save user.");
             return new Response(JSON.stringify({ message: "User not saved!" }), { status: 500 });
         }
 
-        //await BonsaiLogger(`INFO: User created successfully! ID: ${dbResponse.insertedId}`);
+        logger.info(`User created successfully! ID: ${dbResponse.insertedId}`);
         return new Response(JSON.stringify({ message: "User saved successfully!" }), { status: 201 });
 
     } catch (error) {
-        //await BonsaiLogger(`ERROR: MongoDB connection error - ${error.message}`);
+        logger.error(`MongoDB connection error: ${error.message}`);
         return new Response(JSON.stringify({ message: "Something went wrong!" }), { status: 500 });
     }
 }
 
 export async function GET() {
-    //await BonsaiLogger("INFO: GET request received at postCreateUser endpoint");
+    logger.info("GET request received at postCreateUser endpoint.");
     return new Response(JSON.stringify({ message: "You've hit the postCreateUser endpoint" }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
