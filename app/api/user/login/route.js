@@ -15,14 +15,14 @@ export async function POST(req) {
         logger.info("POST request received for user login.");
 
         const { username, password } = await req.json();
-
+        logger.info("Username received.")
         const client = new MongoClient(uri);
         await client.connect();
         logger.info("Connected to MongoDB.");
 
         const database = client.db("niibish-aki");
         const collection = database.collection("users");
-
+        logger.info("Connected to collection.");
         // Find user by username
         const user = await collection.findOne({ username });
 
