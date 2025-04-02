@@ -15,7 +15,12 @@ export async function POST(req) {
         logger.info("POST request received for user login.");
 
         const { username, password } = await req.json();
-        logger.info(uri);
+        if (!uri){
+            logger.error("URI is not defined!");
+        }
+        else{
+            logger.info("Uri is okay." + uri);
+        }
         const client = new MongoClient(uri);
         await client.connect();
         logger.info("Connected to MongoDB.");
