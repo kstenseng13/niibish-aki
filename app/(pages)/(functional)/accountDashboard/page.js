@@ -7,20 +7,30 @@ import OrderHistory from "./OrderHistory";
 import UserAddress from "./UserAddress";
 import Favorites from "./Favorites";
 
+//TODO USE PARALLEL ROUTES FOR LOADING: https://nextjs.org/docs/app/building-your-application/routing/parallel-routes
+
 export default function AccountDashboard() {
-    const { user } = useUser();
+    const { user, isLoggedIn, loading } = useUser();
     const router = useRouter();
     const [activeTab, setActiveTab] = useState("Account Settings");
 
     useEffect(() => {
-        if (!user) {
+        if (!loading && !isLoggedIn) {
             router.push("/login");
         }
-    }, [user, router]);
+    }, [isLoggedIn, loading, router]);
+
+    if (loading) {
+        return (
+            <div className="h-screen flex items-center justify-center">
+                <p>Loading...</p>
+            </div>
+        );
+    }
 
     if (!user) {
         return (
-            <div className='h-screen flex items-center justify-center'>
+            <div className="h-screen flex items-center justify-center">
                 <p>Redirecting...</p>
             </div>
         );
@@ -37,7 +47,7 @@ export default function AccountDashboard() {
         <div>
             <div className="w-full backgroundWhiteSmoke">
                 <div className="border-b border-amber-600 p-2 mx-8 my-4 ">
-                    <h1 className="text-xl font-semibold">Hello, User</h1>
+                    <h1 className="text-xl font-semibold">Hello, {user.username}</h1>
                 </div>
                 <div className="flex flex-col md:flex-row w-full mb-8">
                     <div className="w-full md:w-1/4 p-6">

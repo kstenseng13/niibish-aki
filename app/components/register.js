@@ -1,6 +1,7 @@
 "use client";
 import { useState } from 'react';
 import { useAuth } from '../context/userContext';
+import { redirect } from 'next/navigation'
 
 export default function RegisterForm() {
     const [formData, setFormData] = useState({
@@ -49,7 +50,6 @@ export default function RegisterForm() {
 
     const handleChange = (e) => {
         const { name, type, checked, value } = e.target;
-        // Ensure name matches the state properties
         setFormData((prevData) => ({
             ...prevData,
             [name]: type === 'checkbox' ? checked : value,
@@ -63,7 +63,6 @@ export default function RegisterForm() {
             setError(validationError);
         } else {
             setError('');
-            // Handle form submission (e.g., send data to an API)
             console.log('Form data submitted:', formData);
 
             try {
@@ -75,11 +74,10 @@ export default function RegisterForm() {
                     username: formData.username,
                     email: formData.email,
                     phoneNumber : formData.phoneNumber,
-                    password: formData.password,
-                    terms: formData.terms
+                    password: formData.password
                 };
 
-                const response = await fetch('/api/user/postCreateUser', {
+                const response = await fetch('/api/user/create', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -114,8 +112,8 @@ export default function RegisterForm() {
                     repeatPassword: ''
                 });
 
-                //redirect to user page (login for now)
-                window.location.href = '/login';
+                //redirect to user page 
+                redirect('/accountDashboard');
 
 
             } catch (error) {

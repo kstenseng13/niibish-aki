@@ -1,13 +1,15 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/userContext';
+import { useRouter } from 'next/navigation';
+
 
 export default function Login() {
     const [formData, setFormData] = useState({
         username: '',
         password: ''
     });
-
+    const router = useRouter();
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(true); // Add loading state
     const { isLoggedIn, login, logout, userData } = useAuth();
@@ -52,39 +54,27 @@ export default function Login() {
             setError('');
 
             try {
-                const response = await fetch('/api/postUserLogin', {
+                const response = await fetch('/api/user/login', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ user: formData }),
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: formData.username, password: formData.password }),
                 });
 
-
+                const data = await response.json();
 
                 if (!response.ok) {
-                    const data = await response.json();
-                    console.error('Error getting data:', data);
-                    if (response.status === 404) {
-                        setError('Invalid username or password');
-                        return;
-                    }
-                    throw new Error('Network response was not ok');
+                    setError(data.message || "Login failed");
+                    return;
                 }
 
+                // Store JWT in localStorage
+                localStorage.setItem("token", data.token);
 
-                const resp = await response.json();
+                login({ username: formData.username });
 
-                const _username = resp.userData.username;
-
-                const _userData = { username: _username };
-
-                console.log('User data:', _userData);
-
-                // Log user in
-                login(_userData);
-
-                console.log('Form data submitted:', formData);
+                setTimeout(() => {
+                    router.push('/accountDashboard');
+                }, 500);
 
             } catch (error) {
                 console.error('Error:', error);
@@ -102,7 +92,7 @@ export default function Login() {
     };
 
     if (isLoading) {
-        return <div>Loading...</div>; // Show loading message while data is being loaded
+        return <div>Loading...</div>;
     }
 
     return (
@@ -117,17 +107,31 @@ export default function Login() {
                             </div>
                             <form className="flex flex-col pt-3 md:pt-8" id="loginForm" aria-labelledby="login" onSubmit={handleSubmit}>
                                 <div className="flex flex-col pt-4">
-                                    <label htmlFor="login-email" className="sr-only">Email</label>
-                                    <input type="email" id="login-email" onChange={handleChange}
+                                    <label htmlFor="username" className="block mb-2 text-sm font-medium">Username</label>
+                                    <input
+                                        id="username"
+                                        name="username"
                                         className="w-full flex-1 appearance-none border-gray-300 py-2 px-4 text-base placeholder-gray-400 focus:outline-none"
-                                        placeholder="Email" aria-required="true" aria-describedby="email-help" />
-                                    <span id="email-help" className="sr-only">Enter your email address</span>
+                                        type="text"
+                                        placeholder="janesmith1"
+                                        required
+                                        aria-required="true"
+                                        value={formData.username}
+                                        onChange={handleChange}
+                                        aria-describedby="username-help" />
+                                    <span id="username-help" className="sr-only">Enter your username</span>
                                 </div>
                                 <div className="mb-12 flex flex-col pt-4">
                                     <label htmlFor="login-password" className="sr-only">Password</label>
-                                    <input type="password" id="login-password" onChange={handleChange}
+                                    <input type="password"
+                                        id="login-password"
+                                        onChange={handleChange}
+                                        value={formData.password}
+                                        name="password"
                                         className="w-full flex-1 appearance-none border-gray-300 py-2 px-4 text-base placeholder-gray-400 focus:outline-none"
-                                        placeholder="Password" aria-required="true" aria-describedby="password-help" />
+                                        placeholder="Password"
+                                        aria-required="true"
+                                        aria-describedby="password-help" />
                                     <span id="password-help" className="sr-only">Enter your password</span>
                                 </div>
                                 <button type="submit" id="login" name="login"

@@ -1,3 +1,5 @@
+//TODO: USE INTERCEPTING ROUTES???: https://nextjs.org/docs/app/building-your-application/routing/intercepting-routes
+
 export default function Menu() {
     return (
         <div className="container mx-auto p-4">
