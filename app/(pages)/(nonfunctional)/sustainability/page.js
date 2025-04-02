@@ -36,7 +36,7 @@ export default function Sustainability() {
                         Our goal is to eliminate single-use plastics and reduce our overall environmental impact. By supporting companies that 
                         share our commitment to sustainability, we help create a circular economy that benefits both people and the planet.
                     </p>
-                    <p className="py-4">
+                    <div className="py-4">
                         <span className="font-semibold">Key Initiatives:</span>
                         <ul className="list-disc pl-6 py-2">
                             <li>Partnering with small, local farms that use eco-friendly practices to grow tea and other ingredients</li>
@@ -45,7 +45,7 @@ export default function Sustainability() {
                             <li>Adopting carbon-neutral practices wherever possible, including using agave straws and biodegradable packaging</li>
                             <li>Committing to fair trade and ethical sourcing practices that support indigenous farmers and local communities</li>
                         </ul>
-                    </p>
+                    </div>
                     <p className="py-4">
                         <span className="font-semibold">Looking Ahead:</span> As we continue to grow, our sustainability efforts will only 
                         intensify. We are actively working towards achieving carbon neutrality across all our operations and expanding 

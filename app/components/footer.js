@@ -36,7 +36,7 @@ export default function Footer() {
                                 Useful links
                             </h6>
                             <p className="mb-4">
-                                <a href="/privacy">About Us</a>
+                                <a href="/aboutUs">About Us</a>
                             </p>
                             <p className="mb-4">
                                 <a href="/terms">Terms</a>
