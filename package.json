@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@elastic/elasticsearch": "^8.17.1",
+    "@logdna/logger": "^2.6.11",
     "bcryptjs": "^3.0.2",
     "dotenv": "^16.4.7",
     "jsonwebtoken": "^9.0.2",
