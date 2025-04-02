@@ -1,8 +1,10 @@
 import { MongoClient } from "mongodb";
 import bcrypt from "bcryptjs";
-import { loadEnvConfig } from '@next/env';
-import logger from "@/lib/dnaLogger";
-loadEnvConfig(process.cwd()); 
+import { loadEnvConfig } from "@next/env";
+import logger from "@/lib/dnaLogger.js";
+import { verifyToken } from "@/utils/auth.js";
+
+loadEnvConfig(process.cwd());
 
 const uri = process.env.MONGODB_URI;
 
@@ -10,23 +12,23 @@ export async function POST(req) {
     try {
         logger.info("POST request received for user creation.");
 
-        // Check if the request contains an Authorization header with a Bearer token
+        // Check for Authorization header
         const authHeader = req.headers.get("Authorization");
         if (!authHeader) {
             logger.warn("Authorization header missing.");
             return new Response(JSON.stringify({ message: "Authorization header missing" }), { status: 403 });
         }
 
-        const token = authHeader.split(" ")[1];  // Extract token from Bearer token
+        const token = authHeader.split(" ")[1]; // Extract token
         if (!token) {
             logger.warn("Token missing.");
             return new Response(JSON.stringify({ message: "Token missing" }), { status: 403 });
         }
 
-        // Verify the token using the verifyToken function
+        // Verify the token
         let decoded;
         try {
-            decoded = verifyToken(token);  // Decodes the JWT and returns the payload
+            decoded = verifyToken(token);
         } catch (error) {
             logger.error(`Invalid or expired token: ${error.message}`);
             return new Response(JSON.stringify({ message: "Invalid or expired token" }), { status: 403 });
@@ -34,9 +36,8 @@ export async function POST(req) {
 
         logger.info(`Authenticated user: ${decoded.username}`);
 
-        // Proceed with user creation logic
+        // Get user data from request
         const { user } = await req.json();
-
         if (!user) {
             logger.error("User data is required!");
             return new Response(JSON.stringify({ message: "User data is required!" }), { status: 400 });
@@ -56,6 +57,7 @@ export async function POST(req) {
 
         if (existingUser) {
             logger.warn(`Username or email already exists: ${user.username}`);
+            await client.close();
             return new Response(JSON.stringify({ message: "Username or email already exists!" }), { status: 409 });
         }
 
@@ -79,7 +81,7 @@ export async function POST(req) {
         return new Response(JSON.stringify({ message: "User saved successfully!" }), { status: 201 });
 
     } catch (error) {
-        logger.error(`MongoDB connection error: ${error.message}`);
+        logger.error(`Error in user creation: ${error.message}`);
         return new Response(JSON.stringify({ message: "Something went wrong!" }), { status: 500 });
     }
 }
