@@ -60,17 +60,26 @@ export default function Login() {
                     body: JSON.stringify({ username: formData.username, password: formData.password }),
                 });
 
-                const data = await response.json();
-
                 if (!response.ok) {
+                    const data = await response.json();
+                    console.error('Error saving data:', data);
                     setError(data.message || "Login failed");
                     return;
                 }
 
-                // Store JWT in localStorage
-                localStorage.setItem("token", data.token);
+                const { user, token } = await response.json();
 
-                login({ username: formData.username });
+                // Update user data
+                const userData = {
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    username: user.username,
+                    email: user.email,
+                    phoneNumber: user.phoneNumber
+                };
+
+                // Log user in
+                login(userData, token);
 
                 setTimeout(() => {
                     router.push('/accountDashboard');

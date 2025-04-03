@@ -1,47 +1,32 @@
 import { MongoClient } from "mongodb";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 import { loadEnvConfig } from "@next/env";
 import logger from "@/lib/dnaLogger.js";
-import { verifyToken } from "../../../_utils/auth.js";
-
+import { sanitizeInput } from "@/lib/sanitize";
 loadEnvConfig(process.cwd());
 
 const uri = process.env.MONGODB_URI;
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export async function POST(req) {
     try {
         logger.info("POST request received for user creation.");
-
-        // Check for Authorization header
-        const authHeader = req.headers.get("Authorization");
-        if (!authHeader) {
-            logger.warn("Authorization header missing.");
-            return new Response(JSON.stringify({ message: "Authorization header missing" }), { status: 403 });
-        }
-
-        const token = authHeader.split(" ")[1]; // Extract token
-        if (!token) {
-            logger.warn("Token missing.");
-            return new Response(JSON.stringify({ message: "Token missing" }), { status: 403 });
-        }
-
-        // Verify the token
-        let decoded;
-        try {
-            decoded = verifyToken(token);
-        } catch (error) {
-            logger.error(`Invalid or expired token: ${error.message}`);
-            return new Response(JSON.stringify({ message: "Invalid or expired token" }), { status: 403 });
-        }
-
-        logger.info(`Authenticated user: ${decoded.username}`);
-
         // Get user data from request
-        const { user } = await req.json();
+        let { user } = await req.json();
         if (!user) {
             logger.error("User data is required!");
             return new Response(JSON.stringify({ message: "User data is required!" }), { status: 400 });
         }
+
+        user = {
+            firstName: sanitizeInput(user.firstName),
+            lastName: sanitizeInput(user.lastName),
+            username: sanitizeInput(user.username),
+            email: sanitizeInput(user.email),
+            phoneNumber: sanitizeInput(user.phoneNumber),
+            password: user.password
+        };
 
         const client = new MongoClient(uri);
         await client.connect();
@@ -64,21 +49,27 @@ export async function POST(req) {
         // Hash password before storing
         const hashedPassword = await bcrypt.hash(user.password, 10);
 
-        const dbResponse = await collection.insertOne({
+        const response = await collection.insertOne({
             ...user,
             password: hashedPassword,
         });
 
-        await client.close();
-        logger.info("MongoDB connection closed.");
-
-        if (!dbResponse.acknowledged) {
+        if (!response.acknowledged) {
             logger.error("Failed to save user.");
+            await client.close();
             return new Response(JSON.stringify({ message: "User not saved!" }), { status: 500 });
         }
 
-        logger.info(`User created successfully! ID: ${dbResponse.insertedId}`);
-        return new Response(JSON.stringify({ message: "User saved successfully!" }), { status: 201 });
+        const newUser = await collection.findOne({ _id: response.insertedId });
+
+        await client.close();
+        logger.info("MongoDB connection closed.");
+
+        /// Generate JWT Token for new user
+        const token = jwt.sign({ userId: response.insertedId, username: newUser.username }, JWT_SECRET, { expiresIn: "7d" });
+
+        logger.info(`User registered successfully: ${newUser.username}`);
+        return new Response(JSON.stringify({ message: "User created successfully", token, user: newUser }), { status: 201 });
 
     } catch (error) {
         logger.error(`Error in user creation: ${error.message}`);

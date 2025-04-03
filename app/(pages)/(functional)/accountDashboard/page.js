@@ -47,7 +47,7 @@ export default function AccountDashboard() {
         <div>
             <div className="w-full backgroundWhiteSmoke">
                 <div className="border-b border-amber-600 p-2 mx-8 my-4 ">
-                    <h1 className="text-xl font-semibold">Hello, {user.username}</h1>
+                    <h1 className="text-xl font-semibold">Hello, {user.firstName}</h1>
                 </div>
                 <div className="flex flex-col md:flex-row w-full mb-8">
                     <div className="w-full md:w-1/4 p-6">

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from 'react';
 import { useAuth } from '../context/userContext';
-import { redirect } from 'next/navigation'
+import { useRouter } from 'next/navigation';
 
 export default function RegisterForm() {
     const [formData, setFormData] = useState({
@@ -14,7 +14,7 @@ export default function RegisterForm() {
         repeatPassword: '',
         terms: false
     });
-
+    const router = useRouter();
     const [error, setError] = useState('');
     const { login } = useAuth();
 
@@ -73,7 +73,7 @@ export default function RegisterForm() {
                     lastName: formData.lastName,
                     username: formData.username,
                     email: formData.email,
-                    phoneNumber : formData.phoneNumber,
+                    phoneNumber: formData.phoneNumber,
                     password: formData.password
                 };
 
@@ -95,15 +95,19 @@ export default function RegisterForm() {
                     throw new Error('Network response was not ok');
                 }
 
+                const { user, token } = await response.json();
+
                 // Update user data
-                const userData = { firstName: formData.firstName,
-                    lastName: formData.lastName,
-                    username: formData.username,
-                    email: formData.email,
-                    phoneNumber : formData.phoneNumber };
+                const userData = {
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    username: user.username,
+                    email: user.email,
+                    phoneNumber: user.phoneNumber
+                };
 
                 // Log user in
-                login(userData);
+                login(userData, token);
 
                 // Reset form if needed
                 setFormData({
@@ -116,8 +120,9 @@ export default function RegisterForm() {
                     repeatPassword: ''
                 });
 
-                //redirect to user page 
-                redirect('/accountDashboard');
+                setTimeout(() => {
+                    router.push('/accountDashboard');
+                }, 500);
 
 
             } catch (error) {
@@ -129,7 +134,7 @@ export default function RegisterForm() {
 
     return (
         <div className="shrink basis-3/4 lg:basis-1/3">
-            <form aria-labelledby="register"  onSubmit={handleSubmit}>
+            <form aria-labelledby="register" onSubmit={handleSubmit}>
                 <div>
                     <div className="inline-block mb-5 mr-1 w-full xl:w-[49%]">
                         <label htmlFor="firstName" className="block mb-2 text-sm font-medium">First Name</label>
@@ -159,7 +164,7 @@ export default function RegisterForm() {
                 <div className="mb-5">
                     <label htmlFor="email" className="block mb-2 text-sm font-medium">Email Address</label>
                     <input type="email" id="email" name="email" className="p-2.5" placeholder="name@email.com" required value={formData.email}
-                    onChange={handleChange} />
+                        onChange={handleChange} />
                 </div>
                 <div className="mb-5">
                     <label htmlFor="phoneNumber" className="block mb-2 text-sm font-medium">Phone Number</label>
@@ -171,18 +176,18 @@ export default function RegisterForm() {
                 <div className="mb-5">
                     <label htmlFor="password" className="block mb-2 text-sm font-medium">Password</label>
                     <input type="password" id="password" name="password" className="p-2.5" placeholder="**********" required value={formData.password}
-                    onChange={handleChange} />
+                        onChange={handleChange} />
                 </div>
                 <div className="mb-5">
                     <label htmlFor="repeatPassword" className="block mb-2 text-sm font-medium">Confirm Password</label>
                     <input type="password" id="repeatPassword" name="repeatPassword" className="p-2.5" placeholder="**********" required value={formData.repeatPassword}
-                    onChange={handleChange} />
+                        onChange={handleChange} />
                 </div>
                 <div className="flex items-start mb-5">
                     <div className="flex items-center h-5">
                         <input id="terms" name="terms" type="checkbox" value=""
                             className="w-4 h-4 accent-amber-600 border border-gray-300 rounded bg-stone-0 focus:ring-3 focus:ring-amber-900 shadow-sm"
-                            required aria-required="true" checked={formData.terms}
+                            required aria-required="true" checked={formData.terms || false}
                             onChange={handleChange}></input>
                     </div>
                     <label htmlFor="terms" className="ms-2 text-sm font-medium">I agree with the <a href="/terms"
@@ -191,7 +196,7 @@ export default function RegisterForm() {
                 <button type="submit" id="login" name="joinRewards"
                     className="text-white shadow-md bg-amber-600 hover:bg-amber-700 focus:ring-4 focus:outline-none focus:ring-amber-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
                     Join Leaf Rewards</button>
-                    {error && <div className="ml-3 mt-3 text-red-500 inline-block">{error}</div>}
+                {error && <div className="ml-3 mt-3 text-red-500 inline-block">{error}</div>}
             </form>
         </div>
     );
