@@ -89,7 +89,7 @@ export default function RegisterForm() {
                     const data = await response.json();
                     console.error('Error saving data:', data);
                     if (response.status === 409) {
-                        setError('Username or email already exists.');
+                        setError('Username already exists.');
                         return;
                     }
                     throw new Error('Network response was not ok');

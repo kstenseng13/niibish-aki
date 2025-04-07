@@ -39,23 +39,23 @@
 }
 
 .bg-whiteSmoke {
-    background-color: @whiteSmoke
+    background-color: @whiteSmoke;
 }
 
 //#endregion
 
 body {
     color: @jetBlack;
-    background-color: @whiteSmoke;
     font-family: "Manrope", sans-serif;
     font-style: normal;
 }
 
+//#region Screen Sizing
 /* Small screens (below 767) */
 @media (max-width: 767px) {
     .headerSizing {
         padding: 0px 64px;
-        word-wrap:break-word;
+        word-wrap: break-word;
     }
 
     .justifyCss {
@@ -147,8 +147,10 @@ body {
         min-height: 620px;
         width: 34%;
     }
-    
+
 }
+
+//#endregion
 
 input,
 select {
@@ -179,7 +181,6 @@ input:focus {
     font-family: "Sentient", serif;
     font-weight: 100;
     font-style: normal;
-    /* otherwise use Berkshire from GoogleFonts if this doesn't work */
 }
 
 .outift {
@@ -227,11 +228,12 @@ input:focus {
 
 .displayHeader {
     font-weight: 600;
-    font-size: 4.5rem;
+    font-size: 4rem;
     line-height: 1;
     filter: drop-shadow(200px 10px 8px rgb(0 0 0 / 0.04)) drop-shadow(0 4px 3px rgb(0 0 0 / 0.1));
     padding: 6rem 1rem;
     font-family: "Manrope", serif;
+    word-wrap: break-word;
 }
 
 .displayHeaderSub {

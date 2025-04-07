@@ -70,7 +70,6 @@
 }
 body {
   color: #312420;
-  background-color: #ede7d4;
   font-family: "Manrope", sans-serif;
   font-style: normal;
 }
@@ -185,7 +184,6 @@ input:focus {
   font-family: "Sentient", serif;
   font-weight: 100;
   font-style: normal;
-  /* otherwise use Berkshire from GoogleFonts if this doesn't work */
 }
 .outift {
   font-family: "Manrope", sans-serif;
@@ -224,11 +222,12 @@ input:focus {
 }
 .displayHeader {
   font-weight: 600;
-  font-size: 4.5rem;
+  font-size: 4rem;
   line-height: 1;
   filter: drop-shadow(200px 10px 8px rgba(0, 0, 0, 0.04)) drop-shadow(0 4px 3px rgba(0, 0, 0, 0.1));
   padding: 6rem 1rem;
   font-family: "Manrope", serif;
+  word-wrap: break-word;
 }
 .displayHeaderSub {
   font-weight: 400;

@@ -24,7 +24,7 @@ export default function Menu() {
                 </div>
             </div>
 
-            <div className="p-4 bg-white mb-4 rounded-lg shadow-md">
+            <div className="p-4 bg-neutral-50 mb-4 rounded-lg shadow-md">
                 {["signature", "seasonal", "milkTea", "fruitTea", "snacks"].map((category) => (
                     <div key={category} id={category}>
                         <h1 className="mt-4 text-center" aria-labelledby={`${category}-heading`}>

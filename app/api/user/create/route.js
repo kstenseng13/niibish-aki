@@ -12,7 +12,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 export async function POST(req) {
     try {
         logger.info("POST request received for user creation.");
-        // Get user data from request
+
         let { user } = await req.json();
         if (!user) {
             logger.error("User data is required!");
@@ -36,14 +36,12 @@ export async function POST(req) {
         const collection = database.collection("users");
 
         // Check if user already exists
-        const existingUser = await collection.findOne({
-            $or: [{ username: user.username }, { email: user.email }]
-        });
+        const existingUser = await collection.findOne({ username: user.username });
 
         if (existingUser) {
-            logger.warn(`Username or email already exists: ${user.username}`);
+            logger.warn(`Username already exists: ${user.username}`);
             await client.close();
-            return new Response(JSON.stringify({ message: "Username or email already exists!" }), { status: 409 });
+            return new Response(JSON.stringify({ message: "Username already exists!" }), { status: 409 });
         }
 
         // Hash password before storing

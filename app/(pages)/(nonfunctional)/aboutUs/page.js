@@ -9,7 +9,7 @@ export default function AboutUs() {
             <div className="bg-matchaDark h-12"></div>
 
             <main className="bg-whiteSmoke justify-center flex flex-wrap w-full p-8" role="main">
-                <div className="w-7/12">
+                <div className="w-5/6 md:w-7/12">
                     <h1>Welcome to Niibish Aki!</h1>
                     <p className="py-4">
                         At Niibish Aki, we blend two rich traditions into one unique experience. We&quot;re a local tea shop in Grand Forks, North Dakota, 
@@ -38,7 +38,7 @@ export default function AboutUs() {
                         foster a deeper understanding and appreciation for Native American traditions.
                     </p>
                     <p className="py-4">
-                        Niibish Aki is Ojibwe for “Tea of the Earth.” The name reflects both my heritage as a member of the White Earth Nation and the 
+                        Niibish Aki is Ojibwe for “Tea of the Earth.” The name reflects both my heritage as a descendant of the White Earth Nation and the 
                         deep connection my family has to the land. Growing up, my grandma and great aunt often spoke fondly of the word “niibish,” 
                         meaning “water” or “tea,” which always held a sense of comfort, connection, and nourishment. It is a name that honors my 
                         Ojibwe roots while also celebrating the natural world that provides us with so much — from the earth to the plants, herbs, and 

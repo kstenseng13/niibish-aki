@@ -69,16 +69,15 @@ export default function Login() {
 
                 const { user, token } = await response.json();
 
-                // Update user data
                 const userData = {
                     firstName: user.firstName,
                     lastName: user.lastName,
                     username: user.username,
                     email: user.email,
-                    phoneNumber: user.phoneNumber
+                    phoneNumber: user.phoneNumber,
+                    _id: user._id
                 };
 
-                // Log user in
                 login(userData, token);
 
                 setTimeout(() => {
