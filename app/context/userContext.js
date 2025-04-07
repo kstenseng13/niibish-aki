@@ -11,7 +11,10 @@ export const UserProvider = ({ children }) => {
     const [userData, setUserData] = useState({
         username: '',
         firstName: '',
-        lastName: ''
+        lastName: '',
+        phoneNumber: '',
+        _id: '',
+        email: ''
     });
     const [token, setToken] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = useState(false);

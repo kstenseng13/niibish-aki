@@ -7,7 +7,7 @@ export default function Terms() {
 
             <div className="bg-teal h-12"></div>
             <div className="bg-whiteSmoke justify-center flex flex-wrap w-full p-8">
-                <div className="w-7/12">
+                <div className="w-5/6 md:w-7/12">
                     <p className="text-lg font-semibold">Updated: March 28, 2025</p>
 
                     <p className="py-4">

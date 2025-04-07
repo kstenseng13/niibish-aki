@@ -5,11 +5,11 @@ import Image from 'next/image';
 export default function Sustainability() {
     return (
         <div>
-            <NonfunctionalHeader title="Sustainability" />
+            <NonfunctionalHeader title="How We Make Tea More Sustainable" />
             <div className="bg-tealDark h-12"></div>
 
             <main className="bg-whiteSmoke justify-center flex flex-wrap w-full p-8" role="main">
-                <div className="w-7/12">
+                <div className="w-5/6 md:w-7/12">
                     <h1>Our Commitment to Sustainable Practices</h1>
                     <p className="py-4">
                         At Niibish Aki, sustainability is at the heart of everything we do. Our mission is to create a positive impact 
