@@ -1,3 +1,4 @@
+import FeaturedItems from "@/components/featuredItems";
 import NonfunctionalHeader from "../../../components/nonfunctionalHeader";
 
 export default function Terms() {
@@ -56,7 +57,7 @@ export default function Terms() {
             <div aria-label="Featured Products">
                 <h2 className="text-center mt-4">Explore Our Featured Products</h2>
                 <div id="featuredProductsSection" className="productSection justify-center" aria-live="polite">
-                    {/* TODO: Add Featured Products Section */}
+                    <FeaturedItems />
                 </div>
             </div>
         </div>
