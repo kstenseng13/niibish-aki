@@ -14,7 +14,6 @@ export default function ProductCard({ item, onClick }) {
                     src={`/images/menu/${item.image}`}
                     alt={item.alt || item.name}
                     fill
-                    style={{ objectFit: "cover" }}
                     className="productCardImage"
                 />
             </div>
