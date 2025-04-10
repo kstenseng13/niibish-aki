@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 
-export default function ProductModal({ item, onClose }) {
+export default function ProductModal({ item, categoryLabel, onClose }) {
     const [type, setType] = useState("Iced");
     const [size, setSize] = useState("Small");
     const [quantity, setQuantity] = useState(1);
@@ -78,7 +78,7 @@ export default function ProductModal({ item, onClose }) {
     return (
         <div className="modal-backdrop" onClick={resetAndClose}>
             <div className="modal-content p-2 pt-4 md:p-4 md:pt-8" onClick={(e) => e.stopPropagation()} role="dialog" tabIndex={0}>
-                <button className="modal-close md:hidden" onClick={onClose}>X</button>
+                <button className="modal-close md:hidden" onClick={onClose}>×</button>
                 <div className="flex flex-col h-full">
                     <div className="relative h-[250px] md:h-[300px] mx-4 md:mx-28 mt-2 mb-6 rounded overflow-hidden">
                         <Image src={`/images/menu/${item.image}`} alt={item.alt || item.name} fill style={{ objectFit: "cover" }} className="rounded" />

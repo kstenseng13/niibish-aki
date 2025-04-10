@@ -318,7 +318,6 @@ table tbody td {
   padding: 0.625rem 1.25rem;
   text-align: center;
   transition: background-color 150ms ease-in-out;
-  transition: transform 150ms ease;
   outline: none;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
 }
@@ -327,9 +326,6 @@ table tbody td {
 }
 .actionButton:focus {
   box-shadow: 0 0 0 4px rgba(129, 190, 197, 0.5);
-}
-.actionButton:active {
-  transform: scale(0.95);
 }
 .modal-backdrop {
   position: fixed;
