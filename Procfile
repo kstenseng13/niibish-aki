@@ -1,0 +1,1 @@
+web: bin/qgtunnel --config .qgtunnel.yml --stdout & npm run start

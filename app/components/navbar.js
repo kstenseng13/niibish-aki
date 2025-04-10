@@ -30,10 +30,10 @@ export default function Navbar() {
                     <button id="toggleMenu" aria-expanded="false" aria-controls="menu" aria-label="Toggle Nav Menu">
                         <Image width={24} height={24} src="https://cdn.iconscout.com/icon/free/png-512/free-menu-1768000-1502336.png?f=webp&w=256"
                             alt="Menu Icon"
-                            className="w-10 pr-2 hover:cursor-pointer"/>
+                            className="w-10 pr-2 hover:cursor-pointer" />
                     </button>
                 </div>
-                <div className="hidden navBarMenu lg:block lg:text-xl hover:text-black shadow-md bg-orange-50 hover:bg-orange-100 focus:ring-4 focus:outline-none rounded-lg py-2.5" id="navbarOrder">
+                <div className="hidden navBarMenu lg:block lg:text-xl hover:text-black shadow-md bg-orange-50 hover:bg-orange-100 focus:ring-4 focus:outline-none rounded-lg py-2.5 transition active:scale-95" id="navbarOrder">
                     <Link href="/menu">Order Now</Link>
                 </div>
                 {!isLoggedIn && (
@@ -61,7 +61,7 @@ export default function Navbar() {
                 <div className="hidden navBarMenu lg:block lg:text-xl hover:text-stone-950" id="navbarCart">
                     <Link href="/cart">
                         <Image width={24} height={24} src="https://cdn.iconscout.com/icon/free/png-512/free-shopping-cart-icon-download-in-svg-png-gif-file-formats--trolley-online-user-interface-pack-icons-1502238.png?f=webp&w=256"
-                            alt="Shopping Cart Icon" className="ml-4 w-8 h-8"/>
+                            alt="Shopping Cart Icon" className="ml-4 w-8 h-8" />
                     </Link>
                 </div>
             </nav>
