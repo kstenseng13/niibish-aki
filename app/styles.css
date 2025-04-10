@@ -171,10 +171,13 @@ select {
   width: 100%;
 }
 input:focus {
-  --tw-ring-color: #e9ae86;
-  border-color: #e9ae86;
+  --tw-ring-color: #81BEC5;
+  border-color: #81BEC5;
   outline: 2px solid transparent;
   outline-offset: 2px;
+}
+input[type="checkbox"] {
+  accent-color: #81BEC5;
 }
 @font-face {
   font-family: "Sentient";
@@ -194,7 +197,7 @@ input:focus {
 .note {
   font-family: "Manrope", sans-serif;
   font-optical-sizing: auto;
-  font-weight: 400;
+  font-weight: 300;
   font-style: normal;
 }
 .navBarContainer {
@@ -283,4 +286,74 @@ table tbody td {
 }
 .tab-btn:hover {
   background-color: #4DA1A9;
+}
+.form-accent {
+  color: #81BEC5;
+}
+.form-accent:hover {
+  color: #4DA1A9;
+  text-decoration: underline;
+}
+.matcha-checkbox {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #81BEC5;
+  border: 1px solid #c7e2e5;
+  background-color: #f5f5f4;
+  border-radius: 0.25rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.matcha-checkbox:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(77, 161, 169, 0.3);
+}
+.matcha-label {
+  color: #4DA1A9;
+}
+.actionButton {
+  background-color: #81BEC5;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  padding: 0.625rem 1.25rem;
+  text-align: center;
+  transition: background-color 150ms ease-in-out;
+  outline: none;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+}
+.actionButton:hover {
+  background-color: #4DA1A9;
+}
+.actionButton:focus {
+  box-shadow: 0 0 0 4px rgba(129, 190, 197, 0.5);
+}
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.modal-content {
+  background: white;
+  max-width: 500px;
+  width: 90%;
+  min-height: 500px;
+  max-height: 90vh;
+  border-radius: 1rem;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+  position: relative;
+  overflow-y: auto;
+}
+.modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1.25rem;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
 }
