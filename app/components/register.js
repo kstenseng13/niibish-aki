@@ -201,7 +201,7 @@ export default function RegisterForm() {
                     </label>
                 </div>
 
-                <button type="submit" id="login" name="joinRewards" className="actionButton">
+                <button type="submit" id="login" name="joinRewards" className="actionButton ">
                     Join Leaf Rewards
                 </button>
 
