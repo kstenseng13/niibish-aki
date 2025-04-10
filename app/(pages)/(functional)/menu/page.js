@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import ProductCard from "@/components/productCard";
+import ProductModal from "@/components/productModal";
 
 const categories = [
     { key: "featured", label: "Featured", code: 0 },
@@ -14,6 +15,7 @@ const categories = [
 export default function Menu() {
     const [menuItems, setMenuItems] = useState([]);
     const [error, setError] = useState("");
+    const [activeItem, setActiveItem] = useState(null);
 
     useEffect(() => {
         const fetchMenuItems = async () => {
@@ -36,15 +38,19 @@ export default function Menu() {
 
     return (
         <div className="container mx-auto p-4">
+            <ProductModal item={activeItem} onClose={() => setActiveItem(null)} />
+
             <div className="flex flex-wrap items-center justify-between mb-4">
                 <div className="float-right">
                     <div className="py-2 md:px-2">
                         <nav className="flex flex-wrap gap-2 md:gap-4">
                             {categories.map((cat) => (
-                                <a key={cat.key}
+                                <a
+                                    key={cat.key}
                                     href={`#${cat.key}`}
                                     data-target={`#${cat.key}`}
-                                    className="tab-btn focus:ring-4 shadow-md ">
+                                    className="tab-btn focus:ring-4 shadow-md"
+                                >
                                     {cat.label}
                                 </a>
                             ))}
@@ -59,9 +65,13 @@ export default function Menu() {
                     return (
                         <div key={cat.key} id={cat.key}>
                             <h1 className="my-8 text-center text-2xl font-bold">{cat.label}</h1>
-                            <div className="productSection grid gap-4">
+                            <div className="productSection grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                                 {items.map((item) => (
-                                    <ProductCard key={item._id} item={item} />
+                                    <ProductCard
+                                        key={item._id}
+                                        item={item}
+                                        onClick={setActiveItem}
+                                    />
                                 ))}
                             </div>
                         </div>

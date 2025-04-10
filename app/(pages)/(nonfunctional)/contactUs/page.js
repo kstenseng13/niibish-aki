@@ -1,11 +1,12 @@
 import Image from 'next/image'
 import NonfunctionalHeader from "../../../components/nonfunctionalHeader";
+import FeaturedItems from '@/components/featuredItems';
 
 export default function ContactUs() {
     return (
         <div>
             <NonfunctionalHeader title="Contact Us" />
-            <div className="bg-salmonDark h-12"></div>
+            <div className="bg-matchaDark h-12"></div>
             <main className="bg-whiteSmoke justify-center flex flex-wrap w-full p-8" role="main">
                 <div className="w-7/12 pl-8">
                     <h1>Contact Niibish Aki</h1>
@@ -40,6 +41,8 @@ export default function ContactUs() {
                     />
                 </aside>
             </main>
+            <div className="bg-teal h-12"></div>
+            <FeaturedItems/>
         </div>
     );
 }
