@@ -47,10 +47,10 @@ export default function AccountDashboard() {
         <div>
             <div className="w-full backgroundWhiteSmoke">
                 <div className="border-b border-amber-600 p-2 mx-8 my-4 ">
-                    <h1 className="text-xl font-semibold">Hello, {user.username}</h1>
+                    <h3 className="text-xl font-semibold">Hello, {user.firstName}</h3>
                 </div>
                 <div className="flex flex-col md:flex-row w-full mb-8">
-                    <div className="w-full md:w-1/4 p-6">
+                    <div className="w-full md:w-1/4 p-2 md:p-6">
                         <div className="flex md:flex-col gap-2 md:gap-0">
                             {tabs.map((tab) => (
                                 <button
@@ -65,7 +65,7 @@ export default function AccountDashboard() {
                             ))}
                         </div>
                     </div>
-                    <div className="w-full min-h-[500px] shadow-md shadow-orange-700/10 p-6 md:mr-8 md:border-1 md:border-orange-700/50">
+                    <div className="w-full min-h-[500px] shadow-md shadow-orange-700/10 p-2 md:p-6 md:mr-8 md:border-1 md:border-orange-700/50 bg-neutral-50">
                         {tabs.find(tab => tab.name === activeTab)?.component}
                     </div>
                 </div>

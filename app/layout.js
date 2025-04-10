@@ -30,7 +30,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
+      <body className="bg-[linear-gradient(to_bottom,rgba(255,245,235,0.95),rgba(255,245,235,0.90)),url('https://img.freepik.com/free-vector/hand-drawn-floral-outline-background_23-2150611130.jpg')]">
       <UserProvider>
         <Navbar />
         {children}

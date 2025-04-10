@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -12,7 +13,6 @@
     "@elastic/elasticsearch": "^8.17.1",
     "@logdna/logger": "^2.6.11",
     "bcryptjs": "^3.0.2",
-    "dotenv": "^16.4.7",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.15.0",
     "next": "^15.2.4",
