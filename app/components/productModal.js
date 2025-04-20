@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useCart } from "../context/cartContext";
 
-export default function ProductModal({ item, categoryLabel, onClose }) {
+export default function ProductModal({ item, onClose }) {
+    const { addItemToCart, isLoading } = useCart();
     const [type, setType] = useState("Iced");
     const [size, setSize] = useState("Small");
     const [quantity, setQuantity] = useState(1);
@@ -9,7 +11,7 @@ export default function ProductModal({ item, categoryLabel, onClose }) {
     const [selectedAddIns, setSelectedAddIns] = useState({});
     const [expanded, setExpanded] = useState(false);
     const [error, setError] = useState("");
-
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const isSnack = item?.category === 4;
 
     useEffect(() => {
@@ -30,9 +32,8 @@ export default function ProductModal({ item, categoryLabel, onClose }) {
 
     if (!item) return null;
 
-    const basePrice = typeof item.price === "object" && "$numberDecimal" in item.price
-        ? parseFloat(item.price.$numberDecimal)
-        : item.price;
+    const basePrice = typeof item.price === "object" && "$numberDecimal" in item.price ? parseFloat(item.price.$numberDecimal) : item.price;
+    const sizeUpcharge = size === "Medium" ? 0.75 : size === "Large" ? 1.10 : size === "Extra Large" ? 1.50 : 0;
 
     const addInsArray = Object.entries(selectedAddIns)
         .map(([id, amount]) => {
@@ -40,29 +41,41 @@ export default function ProductModal({ item, categoryLabel, onClose }) {
             if (!addIn || amount === "None") return null;
             const quantity = amount === "Easy" ? 0.5 : amount === "Regular" ? 1 : 1.5;
             return { _id: id, name: addIn.name, price: addIn.price, amount: quantity };
-        })
-        .filter(Boolean);
+        }) .filter(Boolean);
 
-    const totalAddInsPrice = addInsArray.reduce(
-        (total, addIn) => total + addIn.price * addIn.amount,
-        0
-    );
+    const totalAddInsPrice = addInsArray.reduce((total, addIn) => total + addIn.price * addIn.amount, 0 );
 
-    const sizeUpcharge = size === "Medium" ? 0.75 : size === "Large" ? 1.10 : size === "ExtraLarge" ? 1.50 : 0;
+    const totalPrice = isSnack ? basePrice * quantity : (basePrice + sizeUpcharge + totalAddInsPrice) * quantity;
 
-    const totalPrice = isSnack
-        ? basePrice * quantity
-        : (basePrice + sizeUpcharge + totalAddInsPrice) * quantity;
+    const baseOrderItem = {
+        itemId: item._id,
+        name: item.name,
+        category: item.category,
+        imagePath: item.image,
+        altText: item.alt || item.name,
+        quantity,
+        totalPrice: parseFloat(totalPrice.toFixed(2))
+    };
 
     const orderItem = isSnack
-        ? { itemId: item._id, quantity, price: parseFloat(totalPrice.toFixed(2)) }
+        ? {
+            ...baseOrderItem,
+            basePrice: basePrice,
+            price: parseFloat(totalPrice.toFixed(2))
+        }
         : {
+            ...baseOrderItem,
             type,
             size,
-            itemId: item._id,
-            addIns: addInsArray,
-            quantity,
-            price: parseFloat(totalPrice.toFixed(2))
+            basePrice: basePrice + sizeUpcharge,
+            addIns: addInsArray.map(addIn => ({
+                id: addIn._id,
+                name: addIn.name,
+                amount: addIn.amount,
+                price: parseFloat((addIn.price * addIn.amount).toFixed(2))
+            })),
+            price: parseFloat((basePrice + sizeUpcharge).toFixed(2)),
+            addInsPrice: parseFloat(totalAddInsPrice.toFixed(2))
         };
 
     const resetAndClose = () => {
@@ -75,10 +88,26 @@ export default function ProductModal({ item, categoryLabel, onClose }) {
         onClose();
     };
 
+    const handleAddToCart = async () => {
+        setIsSubmitting(true);
+        try {
+            const success = await addItemToCart(orderItem);
+            if (success) {
+                resetAndClose();
+            } else {
+                setError('Failed to add item to order. Please try again.');
+            }
+        } catch (error) {
+            setError('Failed to add item to order. Please try again.');
+            console.error('Error adding to order:', error);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     return (
         <div className="modal-backdrop" onClick={resetAndClose}>
             <div className="modal-content p-2 pt-4 md:p-4 md:pt-8" onClick={(e) => e.stopPropagation()} role="dialog" tabIndex={0}>
-                <button className="modal-close md:hidden" onClick={onClose}>×</button>
                 <div className="flex flex-col h-full">
                     <div className="relative h-[250px] md:h-[300px] mx-4 md:mx-28 mt-2 mb-6 rounded overflow-hidden">
                         <Image src={`/images/menu/${item.image}`} alt={item.alt || item.name} fill style={{ objectFit: "cover" }} className="rounded" />
@@ -95,11 +124,11 @@ export default function ProductModal({ item, categoryLabel, onClose }) {
                                     <select
                                         value={size}
                                         onChange={(e) => setSize(e.target.value)}
-                                        className="block w-full p-2 mb-2 border border-teal-800/50 rounded-lg bg-gray-50 focus:ring-teal-800/50 focus:border-teal-800/50 hover:cursor-pointer">
+                                        className="block w-full p-2 mb-2 border border-teal-800/50 rounded-lg bg-neutral-50 focus:ring-teal-800/50 focus:border-teal-800/50 hover:cursor-pointer">
                                         <option value="Small">Small</option>
                                         <option value="Medium">Medium</option>
                                         <option value="Large">Large</option>
-                                        <option value="ExtraLarge">Extra Large</option>
+                                        <option value="Extra Large">Extra Large</option>
                                     </select>
                                 </div>
                                 <div className="inline-block w-[48%] md:w-[50%]">
@@ -107,7 +136,7 @@ export default function ProductModal({ item, categoryLabel, onClose }) {
                                     <select
                                         value={type}
                                         onChange={(e) => setType(e.target.value)}
-                                        className="block w-full p-2 mb-2 border border-teal-800/50 rounded-lg bg-gray-50 focus:ring-teal-800/50 focus:border-teal-800/50 hover:cursor-pointer">
+                                        className="block w-full p-2 mb-2 border border-teal-800/50 rounded-lg bg-neutral-50 focus:ring-teal-800/50 focus:border-teal-800/50 hover:cursor-pointer">
                                         <option value="Iced">Iced</option>
                                         <option value="Blended">Blended</option>
                                     </select>
@@ -116,8 +145,8 @@ export default function ProductModal({ item, categoryLabel, onClose }) {
                         )}
 
                         {!isSnack && (
-                            <div className="mb-2 border border-gray-300 rounded-lg bg-gray-50">
-                                <button type="button" className="flex items-center justify-between w-full px-4 py-2 border-b border-gray-300 hover:cursor-pointer"
+                            <div className="mb-2 border border-neutral-300 rounded-lg bg-neutral-50">
+                                <button type="button" className="flex items-center justify-between w-full px-4 py-2 border-b border-neutral-300 hover:cursor-pointer"
                                     onClick={() => setExpanded(!expanded)} aria-expanded={expanded}>
                                     <span>Add-Ins</span>
                                     <svg className={`w-4 h-4 transition-transform ${expanded ? "rotate-180" : "rotate-0"}`} fill="none" stroke="teal" viewBox="0 0 24 24">
@@ -135,7 +164,7 @@ export default function ProductModal({ item, categoryLabel, onClose }) {
                                                 </div>
                                                 <select
                                                     value={selectedAddIns[addIn._id] || "None"}
-                                                    className="basis-1/3 p-1 text-xs md:text-sm border border-teal-800/50 rounded-lg bg-gray-50 hover:cursor-pointer"
+                                                    className="basis-1/3 p-1 text-xs md:text-sm border border-teal-800/50 rounded-lg bg-neutral-50 hover:cursor-pointer"
                                                     onChange={(e) =>
                                                         setSelectedAddIns((prev) => ({
                                                             ...prev,
@@ -157,20 +186,16 @@ export default function ProductModal({ item, categoryLabel, onClose }) {
                         <div className="flex items-center justify-between mt-4 md:mt-8">
                             <div className="flex items-center gap-2 w-1/3 md:w-1/4">
                                 <button onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                                    className="w-6 h-6 p-2 flex items-center justify-center rounded-full border border-gray-300 text-xl hover:cursor-pointer">−</button>
+                                    className="w-6 h-6 p-2 flex items-center justify-center rounded-full border border-neutral-300 text-xl hover:cursor-pointer">−</button>
                                 <input type="number" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} min={1} className="w-16 text-center p-2 border rounded" />
                                 <button onClick={() => setQuantity(q => q + 1)}
-                                    className="w-6 h-6 p-2 flex items-center justify-center rounded-full border border-gray-300 text-xl hover:cursor-pointer">+</button>
+                                    className="w-6 h-6 p-2 flex items-center justify-center rounded-full border border-neutral-300 text-xl hover:cursor-pointer">+</button>
                             </div>
-
-                            <button onClick={() => {
-                                console.log("Added to order:", orderItem);
-                                onClose();
-                            }} className="actionButton">
-                                Add to Order - ${totalPrice.toFixed(2)}
+                            <button className="actionButton" disabled={isSubmitting || isLoading}
+                                onClick={handleAddToCart}>
+                                {isSubmitting || isLoading ? 'Adding...' : `Add to Order - $ ${totalPrice.toFixed(2)}`}
                             </button>
                         </div>
-
                         {error && <p className="text-red-500 mt-4 text-sm">{error}</p>}
                     </div>
                 </div>
