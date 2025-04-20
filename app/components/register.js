@@ -63,7 +63,6 @@ export default function RegisterForm() {
             setError(validationError);
         } else {
             setError('');
-            console.log('Form data submitted:', formData);
 
             try {
 
@@ -159,8 +158,7 @@ export default function RegisterForm() {
                         required
                         aria-required="true"
                         value={formData.username}
-                        onChange={handleChange}
-                    />
+                        onChange={handleChange} />
                 </div>
 
                 <div className="mb-5">

@@ -57,7 +57,6 @@ export const UserProvider = ({ children }) => {
         localStorage.setItem("userData", JSON.stringify(data));
         localStorage.setItem("isLoggedIn", JSON.stringify(true));
         localStorage.setItem("token", token);
-        console.log('User logged in:', data);
     };
 
     const logout = () => {

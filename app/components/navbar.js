@@ -1,13 +1,17 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useUser } from '../context/userContext';
+import { useCart } from '../context/cartContext';
 import { toggleNavbarMenu } from '../_utils/navbarToggle';
 import Link from 'next/link';
 import Image from 'next/image';
+import CartPreview from './cartPreview';
 
 export default function Navbar() {
     const { isLoggedIn, logout } = useUser(); // Get login state and logout function
+    const { cartItems } = useCart();
+    const [showCartPreview, setShowCartPreview] = useState(false);
 
     useEffect(() => {
         toggleNavbarMenu();
@@ -58,11 +62,21 @@ export default function Navbar() {
                         </div>
                     </>
                 )}
-                <div className="hidden navBarMenu lg:block lg:text-xl hover:text-stone-950" id="navbarCart">
+                <div className="hidden navBarMenu lg:block lg:text-xl hover:text-stone-950 relative" id="navbarCart"
+                    onMouseEnter={() => setShowCartPreview(true)} onMouseLeave={() => setShowCartPreview(false)}>
                     <Link href="/cart">
-                        <Image width={24} height={24} src="https://cdn.iconscout.com/icon/free/png-512/free-shopping-cart-icon-download-in-svg-png-gif-file-formats--trolley-online-user-interface-pack-icons-1502238.png?f=webp&w=256"
-                            alt="Shopping Cart Icon" className="ml-4 w-8 h-8"/>
+                        <div className="relative">
+                            <Image width={24} height={24}
+                                src="https://cdn.iconscout.com/icon/free/png-512/free-shopping-cart-icon-download-in-svg-png-gif-file-formats--trolley-online-user-interface-pack-icons-1502238.png?f=webp&w=256"
+                                alt="Shopping Cart Icon" className="ml-4 w-8 h-8"/>
+                            {cartItems && cartItems.length > 0 && (
+                                <span className="absolute -top-2 left-10 bg-amber-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                    {cartItems.length}
+                                </span>
+                            )}
+                        </div>
                     </Link>
+                    {showCartPreview && <CartPreview />}
                 </div>
             </nav>
             <nav id="mobileMenu" className="hidden lg:hidden w-full bg-whiteSmoke">
