@@ -5,7 +5,7 @@ import Image from 'next/image';
 export default function OrderItem({ orderItem }) {
     const [isRemoving, setIsRemoving] = useState(false);
     const [quantity, setQuantity] = useState(orderItem.quantity || 1);
-    const { productImages, removeItemFromCart, updateItemQuantity, cartItems } = useCart();
+    const { productImages, removeItemFromCart, updateItemQuantity, cartItems, setItemForEdit } = useCart();
 
     // Keep local quantity in sync with cart context
     useEffect(() => {
@@ -36,6 +36,10 @@ export default function OrderItem({ orderItem }) {
         } finally {
             setIsRemoving(false);
         }
+    };
+
+    const handleEditItem = () => {
+        setItemForEdit(orderItem.cartItemId);
     };
 
     const renderAddInItem = (addIn, index) => {
@@ -78,8 +82,12 @@ export default function OrderItem({ orderItem }) {
                             {orderItem.type ? `${orderItem.type} ${orderItem.name}` : orderItem.name}
                         </span>
                     </div>
-                    <div className="grow pt-1">
-                        <button type="button" className="float-right align-top hover:cursor-pointer" onClick={handleRemoveItem} disabled={isRemoving}  >
+                    <div className="grow pt-1 flex justify-end gap-2">
+                        <button type="button" className="hover:cursor-pointer" onClick={handleEditItem}>
+                            <Image src="/edit.svg" alt="Edit item" width={20} height={20} className="w-3 h-3 lg:w-4 lg:h-4" />
+                            <span className="sr-only">Edit item</span>
+                        </button>
+                        <button type="button" className="hover:cursor-pointer" onClick={handleRemoveItem} disabled={isRemoving}>
                             <Image src="/x.svg" alt="Delete item" width={20} height={20} className="w-3 h-3 lg:w-4 lg:h-4" />
                             <span className="sr-only">Delete item</span>
                         </button>

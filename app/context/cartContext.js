@@ -17,6 +17,7 @@ export function CartProvider({ children }) {
     const [tipPercentage, setTipPercentage] = useState(15);
     const [checkoutError, setCheckoutError] = useState('');
     const [isCheckingOut, setIsCheckingOut] = useState(false);
+    const [itemToEdit, setItemToEdit] = useState(null);
 
     useEffect(() => {
         try {
@@ -136,28 +137,22 @@ export function CartProvider({ children }) {
     const updateItemQuantity = useCallback(async (cartItemId, newQuantity) => {
         try {
             setIsLoading(true);
-            // Ensure quantity is at least 1
             const validQuantity = Math.max(1, newQuantity);
 
             setCartItems(prevItems => prevItems.map(item => {
                 if (item.cartItemId === cartItemId) {
-                    // Get the unit price (price per single item)
                     let unitPrice;
 
-                    // If we have a basePrice, use that as the starting point
                     if (item.basePrice) {
                         unitPrice = item.basePrice;
                     }
-                    // If we have a totalPrice and quantity, calculate the unit price
                     else if (item.totalPrice && item.quantity && item.quantity > 0) {
                         unitPrice = item.totalPrice / item.quantity;
                     }
-                    // Otherwise fall back to the price field
                     else {
                         unitPrice = item.price || 0;
                     }
 
-                    // Calculate add-ins price if any
                     const addInsPrice = item.addIns?.reduce((total, addIn) => {
                         if (typeof addIn === 'object' && addIn.price) {
                             return total + (addIn.price * (addIn.amount || 1));
@@ -165,21 +160,15 @@ export function CartProvider({ children }) {
                         return total;
                     }, 0) || 0;
 
-                    // Calculate size upcharge
                     const sizeUpcharge = item.size === "Medium" ? 0.75 :
                                         item.size === "Large" ? 1.10 :
                                         item.size === "Extra Large" ? 1.50 : 0;
 
-                    // If this is the first time we're calculating the price, add the add-ins and size upcharge
-                    // Otherwise, these are already factored into the unitPrice we calculated above
-                    if (item.basePrice) {
+                    if (item.basePrice && !item.addInsPrice) {
                         unitPrice = unitPrice + sizeUpcharge + addInsPrice;
                     }
 
-                    // Calculate the new total price based on quantity
                     const newTotalPrice = unitPrice * validQuantity;
-
-                    console.log(`Item: ${item.name}, Unit Price: ${unitPrice}, Quantity: ${validQuantity}, Total: ${newTotalPrice}`);
 
                     return {
                         ...item,
@@ -192,6 +181,42 @@ export function CartProvider({ children }) {
             return true;
         } catch (error) {
             console.error('Error updating item quantity:', error);
+            return false;
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    const setItemForEdit = useCallback((cartItemId) => {
+        if (cartItemId === null) {
+            setItemToEdit(null);
+            return true;
+        }
+
+        const itemToEdit = cartItems.find(item => item.cartItemId === cartItemId);
+        if (itemToEdit) {
+            setItemToEdit(itemToEdit);
+            return true;
+        }
+        return false;
+    }, [cartItems]);
+
+    const updateCartItem = useCallback(async (updatedItem) => {
+        try {
+            setIsLoading(true);
+
+            setCartItems(prevItems => prevItems.map(item => {
+                if (item.cartItemId === updatedItem.cartItemId) {
+                    return updatedItem;
+                }
+                return item;
+            }));
+
+            // Clear the item being edited
+            setItemToEdit(null);
+            return true;
+        } catch (error) {
+            console.error('Error updating cart item:', error);
             return false;
         } finally {
             setIsLoading(false);
@@ -254,6 +279,7 @@ export function CartProvider({ children }) {
         checkoutError,
         paymentMethod,
         tipPercentage,
+        itemToEdit,
         addItemToCart,
         removeItemFromCart,
         updateItemQuantity,
@@ -261,7 +287,9 @@ export function CartProvider({ children }) {
         processCheckout,
         setPaymentMethod,
         setTipPercentage,
-        setCheckoutStep
+        setCheckoutStep,
+        setItemForEdit,
+        updateCartItem
     }), [
         cartCalculations,
         cartItems,
@@ -272,11 +300,14 @@ export function CartProvider({ children }) {
         checkoutError,
         paymentMethod,
         tipPercentage,
+        itemToEdit,
         addItemToCart,
         removeItemFromCart,
         updateItemQuantity,
         clearCart,
-        processCheckout
+        processCheckout,
+        setItemForEdit,
+        updateCartItem
     ]);
 
     return (

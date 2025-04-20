@@ -3,15 +3,16 @@ import Image from "next/image";
 import { useCart } from "../context/cartContext";
 
 export default function ProductModal({ item, onClose }) {
-    const { addItemToCart, isLoading } = useCart();
-    const [type, setType] = useState("Iced");
-    const [size, setSize] = useState("Small");
-    const [quantity, setQuantity] = useState(1);
+    const { addItemToCart, isLoading, itemToEdit, updateCartItem, setItemForEdit } = useCart();
+    const [type, setType] = useState(itemToEdit?.type || "Iced");
+    const [size, setSize] = useState(itemToEdit?.size || "Small");
+    const [quantity, setQuantity] = useState(itemToEdit?.quantity || 1);
     const [addIns, setAddIns] = useState([]);
     const [selectedAddIns, setSelectedAddIns] = useState({});
     const [expanded, setExpanded] = useState(false);
     const [error, setError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const isEditMode = !!itemToEdit;
     const isSnack = item?.category === 4;
 
     useEffect(() => {
@@ -21,6 +22,22 @@ export default function ProductModal({ item, onClose }) {
                 if (!res.ok) throw new Error("Failed to fetch add-ins.");
                 const data = await res.json();
                 setAddIns(data);
+
+                // If we're in edit mode and have add-ins, set the selected add-ins
+                if (itemToEdit?.addIns && itemToEdit.addIns.length > 0) {
+                    const selectedAddInsMap = {};
+                    itemToEdit.addIns.forEach(addIn => {
+                        if (addIn.id) {
+                            let amountText = "Regular";
+                            if (addIn.amount === 0.5) amountText = "Easy";
+                            else if (addIn.amount === 1.5) amountText = "Extra";
+
+                            selectedAddInsMap[addIn.id] = amountText;
+                        }
+                    });
+                    setSelectedAddIns(selectedAddInsMap);
+                    setExpanded(true);
+                }
             } catch (err) {
                 console.error("Error fetching add-ins:", err);
                 setError("Unable to load add-ins.");
@@ -28,7 +45,7 @@ export default function ProductModal({ item, onClose }) {
         };
 
         fetchAddIns();
-    }, []);
+    }, [itemToEdit]);
 
     if (!item) return null;
 
@@ -41,9 +58,9 @@ export default function ProductModal({ item, onClose }) {
             if (!addIn || amount === "None") return null;
             const quantity = amount === "Easy" ? 0.5 : amount === "Regular" ? 1 : 1.5;
             return { _id: id, name: addIn.name, price: addIn.price, amount: quantity };
-        }) .filter(Boolean);
+        }).filter(Boolean);
 
-    const totalAddInsPrice = addInsArray.reduce((total, addIn) => total + addIn.price * addIn.amount, 0 );
+    const totalAddInsPrice = addInsArray.reduce((total, addIn) => total + addIn.price * addIn.amount, 0);
 
     const totalPrice = isSnack ? basePrice * quantity : (basePrice + sizeUpcharge + totalAddInsPrice) * quantity;
 
@@ -85,21 +102,97 @@ export default function ProductModal({ item, onClose }) {
         setSelectedAddIns({});
         setExpanded(false);
         setError("");
+
+        // Clear the item being edited if there is one
+        if (itemToEdit) {
+            setItemForEdit(null);
+        }
+
         onClose();
     };
 
     const handleAddToCart = async () => {
         setIsSubmitting(true);
         try {
-            const success = await addItemToCart(orderItem);
-            if (success) {
-                resetAndClose();
+            let success;
+
+            if (isEditMode && itemToEdit) {
+                // Check if anything has actually changed
+                const hasChanges =
+                    type !== itemToEdit.type ||
+                    size !== itemToEdit.size ||
+                    quantity !== itemToEdit.quantity ||
+                    JSON.stringify(addInsArray.map(a => ({ id: a._id, amount: a.amount })).sort()) !==
+                    JSON.stringify((itemToEdit.addIns || []).map(a => ({ id: a.id, amount: a.amount })).sort());
+
+                if (hasChanges) {
+                    const sizeChanged = size !== itemToEdit.size;
+                    const addInsChanged = JSON.stringify(addInsArray.map(a => ({ id: a._id, amount: a.amount })).sort()) !==
+                        JSON.stringify((itemToEdit.addIns || []).map(a => ({ id: a.id, amount: a.amount })).sort());
+
+                    let unitPrice = itemToEdit.price || 0; // Start with the original price
+                    let newAddInsPrice = itemToEdit.addInsPrice || 0;
+
+                    // If size changed, adjust the price accordingly
+                    if (sizeChanged) {
+                        const oldSizeUpcharge = itemToEdit.size === "Medium" ? 0.75 :
+                            itemToEdit.size === "Large" ? 1.10 :
+                                itemToEdit.size === "Extra Large" ? 1.50 : 0;
+                        unitPrice = unitPrice - oldSizeUpcharge + sizeUpcharge;
+                    }
+
+                    if (addInsChanged) {
+                        newAddInsPrice = parseFloat(totalAddInsPrice.toFixed(2));
+                        unitPrice = unitPrice - (itemToEdit.addInsPrice || 0) + newAddInsPrice;
+                    }
+
+                    const newTotalPrice = unitPrice * quantity;
+
+                    const updatedItem = {
+                        ...itemToEdit,
+                        type,
+                        size,
+                        quantity,
+                        addIns: addInsArray.map(addIn => ({
+                            id: addIn._id,
+                            name: addIn.name,
+                            amount: addIn.amount,
+                            price: parseFloat((addIn.price * addIn.amount).toFixed(2))
+                        })),
+                        price: parseFloat(unitPrice.toFixed(2)),
+                        addInsPrice: newAddInsPrice,
+                        totalPrice: parseFloat(newTotalPrice.toFixed(2))
+                    };
+                    success = await updateCartItem(updatedItem);
+                } else if (quantity !== itemToEdit.quantity) {
+                    const updatedItem = {
+                        ...itemToEdit,
+                        quantity,
+                        totalPrice: parseFloat((itemToEdit.price * quantity).toFixed(2))
+                    };
+                    success = await updateCartItem(updatedItem);
+                } else {
+                    resetAndClose();
+                    return;
+                }
+
+                if (success) {
+                    resetAndClose();
+                } else {
+                    setError('Failed to update item. Please try again.');
+                }
             } else {
-                setError('Failed to add item to order. Please try again.');
+                // Add a new ite
+                success = await addItemToCart(orderItem);
+                if (success) {
+                    resetAndClose();
+                } else {
+                    setError('Failed to add item to order. Please try again.');
+                }
             }
         } catch (error) {
-            setError('Failed to add item to order. Please try again.');
-            console.error('Error adding to order:', error);
+            setError(isEditMode ? 'Failed to update item. Please try again.' : 'Failed to add item to order. Please try again.');
+            console.error(isEditMode ? 'Error updating item:' : 'Error adding to order:', error);
         } finally {
             setIsSubmitting(false);
         }
@@ -193,7 +286,7 @@ export default function ProductModal({ item, onClose }) {
                             </div>
                             <button className="actionButton" disabled={isSubmitting || isLoading}
                                 onClick={handleAddToCart}>
-                                {isSubmitting || isLoading ? 'Adding...' : `Add to Order - $ ${totalPrice.toFixed(2)}`}
+                                {isSubmitting || isLoading ? (isEditMode ? 'Updating...' : 'Adding...') : (isEditMode ? `Update Item - $ ${totalPrice.toFixed(2)}` : `Add to Order - $ ${totalPrice.toFixed(2)}`)}
                             </button>
                         </div>
                         {error && <p className="text-red-500 mt-4 text-sm">{error}</p>}

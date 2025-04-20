@@ -1,9 +1,11 @@
 "use client"
 
+import { useState, useEffect } from 'react';
 import { useCart } from '../../../context/cartContext';
 import { usePickupTime } from '@/hooks/usePickupTime';
 import FeaturedItems from "@/components/featuredItems";
 import OrderItem from "@/components/orderItem";
+import ProductModal from "@/components/productModal";
 
 // Helper function to render add-ins for an item
 function renderAddIns(item) {
@@ -40,7 +42,8 @@ function renderAddIns(item) {
 }
 
 export default function Cart() {
-    // Get cart data from context
+    const [activeItem, setActiveItem] = useState(null);
+
     const {
         isLoading,
         isCheckingOut,
@@ -50,11 +53,28 @@ export default function Cart() {
         total,
         formattedItems,
         processCheckout,
-        tipPercentage
+        tipPercentage,
+        itemToEdit
     } = useCart();
 
-    // Use the pickup time hook
     const { formattedTime: pickupTime, isToday } = usePickupTime();
+
+    // If an item is being edited, find the corresponding menu item
+    useEffect(() => {
+        if (itemToEdit) {
+            const menuItem = {
+                _id: itemToEdit.itemId,
+                name: itemToEdit.name,
+                price: itemToEdit.price,
+                image: itemToEdit.imagePath.replace('/images/menu/', ''),
+                alt: itemToEdit.altText,
+                category: itemToEdit.category || (itemToEdit.addIns ? 2 : 4)
+            };
+            setActiveItem(menuItem);
+        } else {
+            setActiveItem(null);
+        }
+    }, [itemToEdit]);
 
     const itemsWithImages = formattedItems.map(item => ({
         ...item,
@@ -63,6 +83,7 @@ export default function Cart() {
 
     return (
         <div>
+            {activeItem && <ProductModal item={activeItem} onClose={() => setActiveItem(null)} />}
             <main className="bg-whiteSmoke justify-center flex flex-wrap w-full p-8 min-h-[calc(100vh-12rem)]" role="main">
                 <div className="w-full lg:w-7/12 lg:mr-8">
                     <h2>Order Summary</h2>
@@ -106,7 +127,7 @@ export default function Cart() {
                                                 {item.size} {item.type} {item.name}
                                                 {item.quantity > 1 && <span className="text-sm text-gray-600 ml-1">(x{item.quantity})</span>}
                                             </span>
-                                            <span>${(item.totalPrice || (item.price * item.quantity)).toFixed(2)}</span>
+                                            <span>$ {(item.totalPrice || (item.price * item.quantity)).toFixed(2)}</span>
                                         </div>
                                         {renderAddIns(item)}
                                     </div>
