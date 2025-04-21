@@ -11,7 +11,6 @@ export function useCheckout() {
   const { cartItems, orderData } = useCart();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutStep, setCheckoutStep] = useState(0);
-  const [paymentMethod, setPaymentMethod] = useState('credit');
   const [tipPercentage, setTipPercentage] = useState(15);
   const [checkoutError, setCheckoutError] = useState('');
   
@@ -32,8 +31,7 @@ export function useCheckout() {
       ...orderData.bill,
       tip: parseFloat(tipAmount),
       total: parseFloat(finalTotal)
-    },
-    paymentMethod
+    }
   };
   
   // Handle checkout process
@@ -73,8 +71,6 @@ export function useCheckout() {
   return {
     isCheckingOut,
     checkoutStep,
-    paymentMethod,
-    setPaymentMethod,
     tipPercentage,
     setTipPercentage,
     tipAmount,

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useMemo } from "react";
 
 const UserContext = createContext();
 
@@ -14,12 +14,40 @@ export const UserProvider = ({ children }) => {
         lastName: '',
         phoneNumber: '',
         _id: '',
-        email: ''
+        email: '',
+        address: {
+            line1: '',
+            line2: '',
+            city: '',
+            state: '',
+            zipcode: ''
+        }
     });
     const [token, setToken] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [isSaved, setIsSaved] = useState(false);
     const [loading, setLoading] = useState(true);
+
+    const fetchUserProfile = async (userId, authToken) => {
+        try {
+            const response = await fetch(`/api/user/${userId}`, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            });
+
+            if (response.ok) {
+                const userData = await response.json();
+                setUser(userData);
+                setUserData(userData);
+                localStorage.setItem('userData', JSON.stringify(userData));
+                return userData;
+            }
+        } catch (error) {
+            console.error('Error fetching user profile:', error);
+        }
+        return null;
+    };
 
     useEffect(() => {
         const storedUserData = localStorage.getItem('userData');
@@ -32,6 +60,11 @@ export const UserProvider = ({ children }) => {
             setUserData(parsedUser);
             setToken(storedToken);
             setIsLoggedIn(true);
+
+            // Fetch the latest user profile to get updated address information
+            if (parsedUser._id) {
+                fetchUserProfile(parsedUser._id, storedToken);
+            }
         } else {
             setIsLoggedIn(false);
         }
@@ -48,7 +81,7 @@ export const UserProvider = ({ children }) => {
         }
     }, [userData, token, isLoggedIn, isSaved]);
 
-    const login = (data, token) => {
+    const login = async (data, token) => {
         setIsLoggedIn(true);
         setUser(data);
         setUserData(data);
@@ -57,6 +90,11 @@ export const UserProvider = ({ children }) => {
         localStorage.setItem("userData", JSON.stringify(data));
         localStorage.setItem("isLoggedIn", JSON.stringify(true));
         localStorage.setItem("token", token);
+
+        // Fetch the complete user profile including address information
+        if (data._id) {
+            await fetchUserProfile(data._id, token);
+        }
     };
 
     const logout = () => {
@@ -69,8 +107,22 @@ export const UserProvider = ({ children }) => {
         localStorage.removeItem('isLoggedIn');
     };
 
+    // Memoize the context value to prevent unnecessary re-renders
+    const contextValue = useMemo(() => ({
+        user,
+        setUser,
+        userData,
+        isLoggedIn,
+        setIsLoggedIn,
+        login,
+        logout,
+        loading,
+        token,
+        fetchUserProfile
+    }), [user, userData, isLoggedIn, loading, token, fetchUserProfile]);
+
     return (
-        <UserContext.Provider value={{ user, setUser, userData, isLoggedIn, setIsLoggedIn, login, logout, loading, token }}>
+        <UserContext.Provider value={contextValue}>
             {children}
         </UserContext.Provider>
     );

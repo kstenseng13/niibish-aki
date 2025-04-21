@@ -69,6 +69,19 @@ export async function PUT(req) {
             updateFields.phoneNumber = sanitizeInput(userInput.phoneNumber);
         }
 
+        if (userInput.address && typeof userInput.address === 'object') {
+            const sanitizedAddress = {};
+            if (userInput.address.line1) sanitizedAddress.line1 = sanitizeInput(userInput.address.line1);
+            if (userInput.address.line2) sanitizedAddress.line2 = sanitizeInput(userInput.address.line2);
+            if (userInput.address.city) sanitizedAddress.city = sanitizeInput(userInput.address.city);
+            if (userInput.address.state) sanitizedAddress.state = sanitizeInput(userInput.address.state);
+            if (userInput.address.zipcode) sanitizedAddress.zipcode = sanitizeInput(userInput.address.zipcode);
+
+            if (Object.keys(sanitizedAddress).length > 0) {
+                updateFields.address = sanitizedAddress;
+            }
+        }
+
         // Verify that the new password isn't the same as the current password
         if (userInput.password) {
             const passwordMatches = await bcrypt.compare(userInput.password, existingUser.password);

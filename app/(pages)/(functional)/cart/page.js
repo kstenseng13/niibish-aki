@@ -1,63 +1,43 @@
 "use client"
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useCart } from '../../../context/cartContext';
-import { usePickupTime } from '@/hooks/usePickupTime';
+import { useUser } from '../../../context/userContext';
 import FeaturedItems from "@/components/featuredItems";
 import OrderItem from "@/components/orderItem";
 import ProductModal from "@/components/productModal";
-
-// Helper function to render add-ins for an item
-function renderAddIns(item) {
-    if (!item.addIns || item.addIns.length === 0) {
-        return null;
-    }
-
-    return (
-        <div className="ml-4 text-sm">
-            {item.addIns.map((addIn) => {
-                // Format add-in amount
-                let amountText = '';
-                if (typeof addIn === 'object') {
-                    if (addIn.amount === 0.5) amountText = 'Easy';
-                    else if (addIn.amount === 1) amountText = 'Regular';
-                    else if (addIn.amount === 1.5) amountText = 'Extra';
-                }
-
-                const addInName = typeof addIn === 'object' ? addIn.name : addIn;
-                const addInPrice = typeof addIn === 'object' ? addIn.price : 0;
-
-                // Create a more reliable key using item ID and add-in name
-                const addInKey = `${item.cartItemId}-${addInName}-${amountText}`;
-
-                return (
-                    <div key={addInKey} className="flex justify-between">
-                        <span>• {addInName}{amountText ? `, ${amountText}` : ''}</span>
-                        <span>+ ${addInPrice.toFixed(2)}</span>
-                    </div>
-                );
-            })}
-        </div>
-    );
-}
+import CustomerInformation from "@/components/customerInformation";
+import TipSelection from "@/components/tipSelection";
+import OrderDetails from "@/components/orderDetails";
 
 export default function Cart() {
+    const router = useRouter();
+    const { user, isLoggedIn, fetchUserProfile, token } = useUser();
     const [activeItem, setActiveItem] = useState(null);
+    const [checkoutStep, setCheckoutStep] = useState(0); // 0: cart, 1: customer info, 2: payment, 3: processing
+    const [customerInfo, setCustomerInfo] = useState(null);
+    const [isGuest, setIsGuest] = useState(true);
+    const [selectedTipPercentage, setSelectedTipPercentage] = useState(15);
+    const [customTipAmount, setCustomTipAmount] = useState(0);
+    const [checkoutError, setCheckoutError] = useState('');
+    const [isLoadingUserProfile, setIsLoadingUserProfile] = useState(false);
 
     const {
         isLoading,
         isCheckingOut,
+        setIsCheckingOut,
         subtotal,
         tax,
         tipAmount,
-        total,
         formattedItems,
         processCheckout,
         tipPercentage,
+        setTipPercentage,
         itemToEdit
     } = useCart();
 
-    const { formattedTime: pickupTime, isToday } = usePickupTime();
+
 
     // If an item is being edited, find the corresponding menu item
     useEffect(() => {
@@ -76,6 +56,83 @@ export default function Cart() {
         }
     }, [itemToEdit]);
 
+    // Handle customer information submission
+    const handleCustomerInfoSubmit = (info, isGuestCheckout) => {
+        // Store the customer information
+        setCustomerInfo(info);
+        setIsGuest(isGuestCheckout);
+        setCheckoutStep(2); // Move to payment step
+    };
+
+    // Handle tip selection
+    const handleTipChange = (percentage, amount) => {
+        setSelectedTipPercentage(percentage);
+        // Ensure amount is a number
+        const numericAmount = parseFloat(amount);
+        setCustomTipAmount(isNaN(numericAmount) ? 0 : numericAmount);
+        setTipPercentage(percentage === 'custom' ? 0 : percentage); // Update context
+    };
+
+    const handleCheckout = async () => {
+        // Validate customer info
+        if (!customerInfo || !customerInfo.email || !customerInfo.firstName || !customerInfo.lastName) {
+            setCheckoutError('Please complete all required customer information fields.');
+            setCheckoutStep(1); // Go back to customer info step
+            return;
+        }
+
+        // Show processing state
+        setCheckoutError('');
+        setIsCheckingOut(true);
+        setCheckoutStep(3); // Set to processing step
+
+        // Prepare order data with customer info
+        const orderData = {
+            customerInfo,
+            isGuest,
+            tipPercentage: selectedTipPercentage,
+            tipAmount: customTipAmount
+        };
+
+        try {
+            const result = await processCheckout(orderData);
+            if (result.success) {
+                // Navigate to the order confirmation page
+                router.push(`/orderConfirmation/${result.orderId}`);
+            } else {
+                setCheckoutError(result.error || 'Checkout failed. Please try again.');
+                setIsCheckingOut(false);
+                setCheckoutStep(2); // Go back to payment step on error
+            }
+        } catch (error) {
+            console.error('Error during checkout:', error);
+            setCheckoutError('An unexpected error occurred. Please try again.');
+            setIsCheckingOut(false);
+            setCheckoutStep(2); // Go back to payment step on error
+        }
+    };
+
+    // Handle return to order summary
+    const handleReturnToSummary = () => {
+        setCheckoutStep(0);
+    };
+
+    // Handle proceed to checkout
+    const handleProceedToCheckout = async () => {
+        // If user is logged in, fetch their latest profile to get address information
+        if (isLoggedIn && user && user._id) {
+            setIsLoadingUserProfile(true);
+            try {
+                await fetchUserProfile(user._id, token);
+            } catch (error) {
+                console.error('Error fetching user profile:', error);
+            } finally {
+                setIsLoadingUserProfile(false);
+            }
+        }
+        setCheckoutStep(1);
+    };
+
     const itemsWithImages = formattedItems.map(item => ({
         ...item,
         imagePath: "/images/menu/" + item.imagePath
@@ -86,83 +143,112 @@ export default function Cart() {
             {activeItem && <ProductModal item={activeItem} onClose={() => setActiveItem(null)} />}
             <main className="bg-whiteSmoke justify-center flex flex-wrap w-full p-8 min-h-[calc(100vh-12rem)]" role="main">
                 <div className="w-full lg:w-7/12 lg:mr-8">
-                    <h2>Order Summary</h2>
-                    <div id="orderSummaryItemsSection" aria-live="polite">
-                        {isLoading || isCheckingOut ? (
-                            <p>{isCheckingOut ? 'Processing your order...' : 'Loading cart items...'}</p>
-                        ) : itemsWithImages.length > 0 ? (
-                            itemsWithImages.map((item, index) => (
-                                <OrderItem key={`item-${item.cartItemId || index}`} orderItem={item} />
-                            ))
-                        ) : (
-                            <div className="text-center p-8">
-                                <p className="text-xl">Your cart is empty</p>
-                                <a href="/menu" className="inline-block mt-4 px-6 py-2 actionButton">
-                                    Browse Menu
-                                </a>
+                    {checkoutStep === 0 && (
+                        <>
+                            <h2>Order Summary</h2>
+                            <div id="orderSummaryItemsSection" aria-live="polite">
+                                {isLoading || isCheckingOut ? (
+                                    <p>{isCheckingOut ? 'Processing your order...' : 'Loading cart items...'}</p>
+                                ) : itemsWithImages.length > 0 ? (
+                                    itemsWithImages.map((item, index) => (
+                                        <OrderItem key={`item-${item.cartItemId || index}`} orderItem={item} />
+                                    ))
+                                ) : (
+                                    <div className="text-center p-8">
+                                        <p className="text-xl">Your cart is empty</p>
+                                        <a href="/menu" className="inline-block mt-4 px-6 py-2 actionButton">
+                                            Browse Menu
+                                        </a>
+                                    </div>
+                                )}
                             </div>
-                        )}
-                    </div>
+                        </>
+                    )}
+
+                    {/* Customer Information Section */}
+                    {checkoutStep === 1 && (
+                        <>
+                            <h2>Checkout</h2>
+                            {isLoadingUserProfile ? (
+                                <div className="bg-white p-6 rounded-lg shadow-md mb-6 m-12 text-center">
+                                    <p className="mb-4">Loading your profile information...</p>
+                                    <div className="flex justify-center">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal"></div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <CustomerInformation onInfoSubmit={handleCustomerInfoSubmit} />
+                            )}
+                            <button onClick={handleReturnToSummary} className="text-teal hover:underline" >
+                                Return to Order Summary
+                            </button>
+                        </>
+                    )}
+
+                    {/* Payment Section */}
+                    {checkoutStep === 2 && (
+                        <>
+                            <h2>Payment</h2>
+                            <div className="bg-white p-6 rounded-lg shadow-md mb-6 m-12">
+                                <h4 className="text-lg font-semibold mb-4">Payment Method</h4>
+                                <div className="mb-8">
+                                    <ul className="list-disc pl-8">
+                                        <li>Pay at Store</li>
+                                    </ul>
+                                </div>
+
+                                {!isCheckingOut && (
+                                    <TipSelection subtotal={subtotal} onTipChange={handleTipChange} initialTipPercentage={tipPercentage} />
+                                )}
+
+                                {checkoutError && (
+                                    <div className="p-3 mb-4 text-red-700 bg-red-100 border border-red-300 rounded">
+                                        {checkoutError}
+                                    </div>
+                                )}
+
+                                <button className="w-full mt-4 actionButton transition" onClick={handleCheckout}
+                                    disabled={isCheckingOut}> {isCheckingOut ? 'Processing...' : 'Complete Order'}
+                                </button>
+                            </div>
+                            {!isCheckingOut && (
+                                <button onClick={() => setCheckoutStep(1)} className="text-teal hover:underline hover:cursor-pointer" >
+                                    Return to Customer Information
+                                </button>
+                            )}
+                        </>
+                    )}
+
+                    {/* Processing Section */}
+                    {checkoutStep === 3 && (
+                        <div className="bg-white p-6 rounded-lg shadow-md mb-6 m-12 text-center">
+                            <h2 className="text-xl font-semibold mb-4">Processing Your Order</h2>
+                            <p className="mb-4">Please wait while we process your order...</p>
+                            <div className="flex justify-center">
+                                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal"></div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {itemsWithImages.length > 0 && (
                     <div className="w-full lg:w-4/12 mt-8 lg:mt-0">
-                        <div className="bg-white p-6 rounded-lg shadow-md">
-                            <h2 className="text-xl font-semibold mb-4">Order Details</h2>
-                            <h4 className="mb-4">Pickup Details</h4>
-                            <div className='mb-4 ml-4'>
-                                <span>Ready At:</span>
-                                <p className="bg-orange-400/30 border border-orange-800/40 rounded p-0.5">22 3rd Street S. Grand Forks, ND 58201</p>
-                            </div>
-                            <div className='mb-4 ml-4'>
-                                <span>For:</span>
-                                <p className="bg-orange-400/30 border border-orange-800/40 rounded p-0.5">Pickup - {pickupTime}{isToday ? ' (Today)' : ''}</p>
-                            </div>
-                            <div className="mb-4">
-                                <h4 className="my-4">Total</h4>
-                                {itemsWithImages.map((item, index) => (
-                                    <div key={`total-item-${item.cartItemId || index}`} className="mb-3 ml-4">
-                                        <div className="flex justify-between">
-                                            <span className="font-medium">
-                                                {item.size} {item.type} {item.name}
-                                                {item.quantity > 1 && <span className="text-sm text-gray-600 ml-1">(x{item.quantity})</span>}
-                                            </span>
-                                            <span>$ {(item.totalPrice || (item.price * item.quantity)).toFixed(2)}</span>
-                                        </div>
-                                        {renderAddIns(item)}
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="border-t border-neutral-300 pt-3 mb-2 ml-4">
-                                <div className="flex justify-between mb-2">
-                                    <span>Subtotal:</span>
-                                    <span>${subtotal.toFixed(2)}</span>
-                                </div>
-                                <div className="flex justify-between mb-2">
-                                    <span>Tax:</span>
-                                    <span>${tax.toFixed(2)}</span>
-                                </div>
-                                <div className="flex justify-between mb-2">
-                                    <span>Tip ({tipPercentage}%):</span>
-                                    <span>${tipAmount}</span>
-                                </div>
-                            </div>
-                            <div className="border-t border-neutral-300 my-3 pt-3 ml-4">
-                                <div className="flex justify-between font-bold text-lg">
-                                    <span>Total:</span>
-                                    <span>${total}</span>
-                                </div>
-                            </div>
+                        <OrderDetails
+                            items={itemsWithImages}
+                            subtotal={subtotal}
+                            tax={tax}
+                            tipAmount={customTipAmount || tipAmount}
+                            tipPercentage={selectedTipPercentage || tipPercentage}
+                            total={parseFloat(subtotal) + parseFloat(tax) + parseFloat(customTipAmount || tipAmount)} />
+
+                        {checkoutStep === 0 && (
                             <button
                                 className="w-full mt-4 actionButton transition"
-                                onClick={async () => {
-                                    const result = await processCheckout();
-                                    if (result.success) {
-                                        window.location.href = `/order-confirmation/${result.orderId}`;
-                                    }
-                                }} disabled={isCheckingOut} >
-                                Proceed to Checkout </button>
-                        </div>
+                                onClick={handleProceedToCheckout}
+                                disabled={isCheckingOut || itemsWithImages.length === 0} >
+                                Proceed to Checkout
+                            </button>
+                        )}
                     </div>
                 )}
             </main>
