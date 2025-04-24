@@ -11,22 +11,22 @@ export default function CustomerInformation({ onInfoSubmit }) {
         email: '',
         phone: '',
         address: '',
+        addressLine2: '',
         city: '',
         state: '',
         zipCode: ''
     });
 
-    // Only update customer info when user data changes and contains relevant fields
     useEffect(() => {
         if (!isLoggedIn || !user) return;
 
-        // Skip if user data hasn't changed in a meaningful way
         const newInfo = {
             firstName: user.firstName || '',
             lastName: user.lastName || '',
             email: user.email || '',
             phone: user.phoneNumber || '',
             address: user.address?.line1 || '',
+            addressLine2: user.address?.line2 || '',
             city: user.address?.city || '',
             state: user.address?.state || '',
             zipCode: user.address?.zipcode || ''
@@ -63,6 +63,7 @@ export default function CustomerInformation({ onInfoSubmit }) {
             ...customerInfo,
             address: {
                 line1: customerInfo.address,
+                line2: customerInfo.addressLine2 || '',
                 city: customerInfo.city,
                 state: customerInfo.state,
                 zipcode: customerInfo.zipCode
@@ -130,7 +131,7 @@ export default function CustomerInformation({ onInfoSubmit }) {
                 </div>
 
                 <div className="mb-4">
-                    <label htmlFor="address" className="block text-sm font-medium text-neutral-700 mb-1">Address</label>
+                    <label htmlFor="address" className="block text-sm font-medium text-neutral-700 mb-1">Address Line 1</label>
                     <input
                         type="text"
                         id="address"
@@ -139,6 +140,20 @@ export default function CustomerInformation({ onInfoSubmit }) {
                         onChange={handleChange}
                         required
                         className="w-full p-2 border border-neutral-300 rounded"
+                        placeholder="Street address"
+                    />
+                </div>
+
+                <div className="mb-4">
+                    <label htmlFor="addressLine2" className="block text-sm font-medium text-neutral-700 mb-1">Address Line 2 (Optional)</label>
+                    <input
+                        type="text"
+                        id="addressLine2"
+                        name="addressLine2"
+                        value={customerInfo.addressLine2}
+                        onChange={handleChange}
+                        className="w-full p-2 border border-neutral-300 rounded"
+                        placeholder="Apartment, suite, unit, building, floor, etc."
                     />
                 </div>
 

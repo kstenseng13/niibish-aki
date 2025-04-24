@@ -8,7 +8,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 
 export default function OrderConfirmation({ params }) {
-    // Use React.use() to unwrap the params promise
     const resolvedParams = use(params);
     const orderId = resolvedParams.orderId;
     const [order, setOrder] = useState(null);
@@ -45,7 +44,6 @@ export default function OrderConfirmation({ params }) {
         }
     }, [orderId]);
 
-    // Format items for display
     const formatItems = (items) => {
         if (!items || !Array.isArray(items)) return [];
 
