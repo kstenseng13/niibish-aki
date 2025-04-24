@@ -11,11 +11,11 @@ export default function Login() {
     });
     const router = useRouter();
     const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState(true); // Add loading state
+    const [isLoading, setIsLoading] = useState(true);
     const { isLoggedIn, login, logout, userData } = useAuth();
 
     useEffect(() => {
-        setIsLoading(false); // Set loading to false once data is loaded
+        setIsLoading(false);
     }, [isLoggedIn]);
 
     const validateForm = () => {

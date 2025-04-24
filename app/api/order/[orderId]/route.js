@@ -20,7 +20,6 @@ export async function GET(req, { params }) {
         const database = client.db("niibish-aki");
         const ordersCollection = database.collection("order");
 
-        // Convert string ID to ObjectId
         let objectId;
         try {
             objectId = new ObjectId(orderId);

@@ -25,26 +25,20 @@ export async function POST(req) {
             });
 
             if (existingCart) {
-                // Check if cart has less than 20 items
                 if (existingCart.items.length >= 20) {
                     return new Response(JSON.stringify({ message: "Cart is full" }), { status: 400 });
                 }
 
-                // Add item to existing cart
                 await ordersCollection.updateOne(
                     { _id: existingCart._id },
                     {
                         $push: { items: item }
                     }
                 );
-
-                // Close the connection
                 await client.close();
-
                 return new Response(JSON.stringify({ orderId: existingCart._id }), { status: 200 });
             }
 
-            // Create new cart
             const newCart = {
                 userId: userId,
                 items: [item],
@@ -59,8 +53,6 @@ export async function POST(req) {
             };
 
             const result = await ordersCollection.insertOne(newCart);
-
-            // Close the connection
             await client.close();
 
             return new Response(JSON.stringify({ orderId: result.insertedId }), { status: 201 });
@@ -69,23 +61,11 @@ export async function POST(req) {
         else {
             const orderData = requestBody;
 
-            // Validate required fields
             if (!orderData.items || !Array.isArray(orderData.items) || orderData.items.length === 0) {
                 return new Response(JSON.stringify({ message: "Order must contain items" }), {
                     status: 400,
                     headers: { "Content-Type": "application/json" }
                 });
-            }
-
-            // Prepare the order document
-            // Create a clean customerInfo object without address fields at the top level
-            const cleanCustomerInfo = { ...orderData.customerInfo || {} };
-            // Remove city, state, zipcode from the top level of customerInfo
-            if (cleanCustomerInfo) {
-                delete cleanCustomerInfo.city;
-                delete cleanCustomerInfo.state;
-                delete cleanCustomerInfo.zipCode;
-                delete cleanCustomerInfo.zipcode;
             }
 
             const orderDocument = {
@@ -97,19 +77,16 @@ export async function POST(req) {
                     tip: 0,
                     total: 0
                 },
-                customerInfo: cleanCustomerInfo,
+                customerInfo: orderData.customerInfo || {},
+                address: orderData.customerInfo?.address || {},
                 tipPercentage: parseFloat(orderData.tipPercentage) || 0,
                 status: 'complete',
                 createdAt: new Date()
             };
 
-            // Insert the order
             const result = await ordersCollection.insertOne(orderDocument);
-
-            // Close the connection
             await client.close();
 
-            // Return the order ID
             return new Response(JSON.stringify({
                 message: "Order created successfully",
                 orderId: result.insertedId.toString()
