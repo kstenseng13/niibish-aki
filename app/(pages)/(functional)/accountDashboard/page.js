@@ -5,9 +5,6 @@ import { useUser } from "../../../context/userContext";
 import AccountSettings from "./AccountSettings";
 import OrderHistory from "./OrderHistory";
 import UserAddress from "./UserAddress";
-import Favorites from "./Favorites";
-
-//TODO USE PARALLEL ROUTES FOR LOADING: https://nextjs.org/docs/app/building-your-application/routing/parallel-routes
 
 export default function AccountDashboard() {
     const { user, isLoggedIn, loading } = useUser();
@@ -39,8 +36,7 @@ export default function AccountDashboard() {
     const tabs = [
         { name: "Account Settings", component: <AccountSettings /> },
         { name: "Orders", component: <OrderHistory /> },
-        { name: "Address", component: <UserAddress /> },
-        { name: "Favorites", component: <Favorites /> }
+        { name: "Address", component: <UserAddress /> }
     ];
 
     return (
@@ -65,7 +61,7 @@ export default function AccountDashboard() {
                             ))}
                         </div>
                     </div>
-                    <div className="w-full min-h-[500px] shadow-md shadow-orange-700/10 p-2 md:p-6 md:mr-8 md:border-1 md:border-orange-700/50 bg-neutral-50">
+                    <div className="w-full min-h-[500px] shadow-md shadow-orange-700/10 p-2 md:p-6 md:mr-8 md:border-1 md:border-orange-700/50 md:rounded-xl bg-neutral-50">
                         {tabs.find(tab => tab.name === activeTab)?.component}
                     </div>
                 </div>

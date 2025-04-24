@@ -37,8 +37,6 @@ export default function Cart() {
         itemToEdit
     } = useCart();
 
-
-
     // If an item is being edited, find the corresponding menu item
     useEffect(() => {
         if (itemToEdit) {
@@ -58,7 +56,6 @@ export default function Cart() {
 
     // Handle customer information submission
     const handleCustomerInfoSubmit = (info, isGuestCheckout) => {
-        // Store the customer information
         setCustomerInfo(info);
         setIsGuest(isGuestCheckout);
         setCheckoutStep(2); // Move to payment step
@@ -67,26 +64,22 @@ export default function Cart() {
     // Handle tip selection
     const handleTipChange = (percentage, amount) => {
         setSelectedTipPercentage(percentage);
-        // Ensure amount is a number
         const numericAmount = parseFloat(amount);
         setCustomTipAmount(isNaN(numericAmount) ? 0 : numericAmount);
-        setTipPercentage(percentage === 'custom' ? 0 : percentage); // Update context
+        setTipPercentage(percentage === 'custom' ? 0 : percentage);
     };
 
     const handleCheckout = async () => {
-        // Validate customer info
         if (!customerInfo || !customerInfo.email || !customerInfo.firstName || !customerInfo.lastName) {
             setCheckoutError('Please complete all required customer information fields.');
             setCheckoutStep(1); // Go back to customer info step
             return;
         }
 
-        // Show processing state
         setCheckoutError('');
         setIsCheckingOut(true);
         setCheckoutStep(3); // Set to processing step
 
-        // Prepare order data with customer info
         const orderData = {
             customerInfo,
             isGuest,
@@ -151,7 +144,6 @@ export default function Cart() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Handle proceed to checkout
     const handleProceedToCheckout = () => {
         setCheckoutStep(1);
     };
@@ -164,7 +156,7 @@ export default function Cart() {
     return (
         <div>
             {activeItem && <ProductModal item={activeItem} onClose={() => setActiveItem(null)} />}
-            <main className="bg-whiteSmoke justify-center flex flex-wrap w-full p-8 min-h-[calc(100vh-12rem)]" role="main">
+            <main className="justify-center flex flex-wrap w-full p-8 min-h-[calc(100vh-12rem)]" role="main">
                 <div className="w-full lg:w-7/12 lg:mr-8">
                     {checkoutStep === 0 && (
                         <>
