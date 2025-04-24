@@ -17,8 +17,13 @@ export default function CustomerInformation({ onInfoSubmit }) {
         zipCode: ''
     });
 
+    // Track if form has been initialized with user data
+    const [isInitialized, setIsInitialized] = useState(false);
+
+    // Only load user data once when component mounts or when user/login state changes
     useEffect(() => {
-        if (!isLoggedIn || !user) return;
+        // Skip if already initialized or no user data available
+        if (isInitialized || !isLoggedIn || !user) return;
 
         const newInfo = {
             firstName: user.firstName || '',
@@ -32,14 +37,9 @@ export default function CustomerInformation({ onInfoSubmit }) {
             zipCode: user.address?.zipcode || ''
         };
 
-        // Only update state if the data is different
-        const currentInfoStr = JSON.stringify(customerInfo);
-        const newInfoStr = JSON.stringify(newInfo);
-
-        if (currentInfoStr !== newInfoStr) {
-            setCustomerInfo(newInfo);
-        }
-    }, [isLoggedIn, user, customerInfo]);
+        setCustomerInfo(newInfo);
+        setIsInitialized(true);
+    }, [isLoggedIn, user, isInitialized]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
