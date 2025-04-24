@@ -130,20 +130,6 @@ export default function OrderDetailsModal({ order, onClose }) {
                             </div>
                         </div>
 
-                        {order.address?.line1 && (
-                            <div className="mb-6 p-4 border border-neutral-200 rounded-lg">
-                                <h3 className="font-semibold mb-2">Delivery Address</h3>
-                                <p>{order.customerInfo?.firstName} {order.customerInfo?.lastName}</p>
-                                <p>{order.address.line1}</p>
-                                {order.address.line2 && <p>{order.address.line2}</p>}
-                                <p>
-                                    {[order.address.city, order.address.state, order.address.zipcode]
-                                        .filter(Boolean)
-                                        .join(', ')}
-                                </p>
-                            </div>
-                        )}
-
                         <div className="mb-6">
                             <h3 className="font-semibold mb-2">Pickup Details</h3>
                             <div className="p-3 bg-orange-100 border border-orange-200 rounded-lg">
