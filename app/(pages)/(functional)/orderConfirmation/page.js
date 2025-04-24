@@ -2,9 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 
-export default function orderConfirmationIndex() {
+export default function OrderConfirmationIndex() {
     const router = useRouter();
-    
+
     return (
         <div className="min-h-screen bg-whiteSmoke flex flex-col items-center justify-center p-4">
             <h1 className="text-2xl font-bold mb-4">Order Confirmation</h1>

@@ -15,20 +15,31 @@ export default function CustomerInformation({ onInfoSubmit }) {
         state: '',
         zipCode: ''
     });
+
+    // Only update customer info when user data changes and contains relevant fields
     useEffect(() => {
-        if (isLoggedIn && user) {
-            setCustomerInfo({
-                firstName: user.firstName || '',
-                lastName: user.lastName || '',
-                email: user.email || '',
-                phone: user.phoneNumber || '',
-                address: user.address?.line1 || '',
-                city: user.address?.city || '',
-                state: user.address?.state || '',
-                zipCode: user.address?.zipcode || ''
-            });
+        if (!isLoggedIn || !user) return;
+
+        // Skip if user data hasn't changed in a meaningful way
+        const newInfo = {
+            firstName: user.firstName || '',
+            lastName: user.lastName || '',
+            email: user.email || '',
+            phone: user.phoneNumber || '',
+            address: user.address?.line1 || '',
+            city: user.address?.city || '',
+            state: user.address?.state || '',
+            zipCode: user.address?.zipcode || ''
+        };
+
+        // Only update state if the data is different
+        const currentInfoStr = JSON.stringify(customerInfo);
+        const newInfoStr = JSON.stringify(newInfo);
+
+        if (currentInfoStr !== newInfoStr) {
+            setCustomerInfo(newInfo);
         }
-    }, [isLoggedIn, user]);
+    }, [isLoggedIn, user, customerInfo]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;

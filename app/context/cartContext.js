@@ -81,7 +81,7 @@ export function CartProvider({ children }) {
                 tip: parseFloat(tipAmount),
                 total: parseFloat(total)
             },
-            status: "pending"
+            status: "complete"
         };
 
         return {
@@ -233,17 +233,28 @@ export function CartProvider({ children }) {
         if (!isLoggedIn || !user || !token || !address) return;
 
         try {
+            // Make sure we're sending the address in the format the API expects
+            // The API expects address to be a property of the update object, not the entire body
             const response = await fetch(`/api/user/${user._id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ address }),
+                body: JSON.stringify({
+                    address: {
+                        line1: address.line1 || '',
+                        line2: address.line2 || '',
+                        city: address.city || '',
+                        state: address.state || '',
+                        zipcode: address.zipcode || ''
+                    }
+                }),
             });
 
             if (!response.ok) {
-                console.error('Failed to update user address');
+                const errorData = await response.json();
+                console.error('Failed to update user address:', errorData);
             } else {
                 console.log('User address updated successfully');
             }
@@ -282,11 +293,10 @@ export function CartProvider({ children }) {
                 // Save address information separately for easier access
                 address: orderData?.customerInfo?.address || {},
                 isGuest: orderData?.isGuest || true,
-                status: 'pending',
+                tipPercentage: parseFloat(orderData?.tipPercentage) || parseFloat(tipPercentage) || 0,
+                status: 'complete',
                 createdAt: new Date().toISOString()
             };
-
-            console.log('Preparing to submit order to API');
 
             // Submit to the API
             let orderId = null;
@@ -306,7 +316,6 @@ export function CartProvider({ children }) {
                 }
 
                 const data = await response.json();
-                console.log('Order created successfully:', data);
 
                 if (data.orderId) {
                     orderId = data.orderId;

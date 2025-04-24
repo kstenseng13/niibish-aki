@@ -34,10 +34,7 @@ export async function POST(req) {
                 await ordersCollection.updateOne(
                     { _id: existingCart._id },
                     {
-                        $push: { items: item },
-                        $set: {
-                            updatedAt: new Date()
-                        }
+                        $push: { items: item }
                     }
                 );
 
@@ -58,8 +55,7 @@ export async function POST(req) {
                     total: 0
                 },
                 status: "cart",
-                createdAt: new Date(),
-                updatedAt: new Date()
+                createdAt: new Date()
             };
 
             const result = await ordersCollection.insertOne(newCart);
@@ -82,6 +78,16 @@ export async function POST(req) {
             }
 
             // Prepare the order document
+            // Create a clean customerInfo object without address fields at the top level
+            const cleanCustomerInfo = { ...orderData.customerInfo || {} };
+            // Remove city, state, zipcode from the top level of customerInfo
+            if (cleanCustomerInfo) {
+                delete cleanCustomerInfo.city;
+                delete cleanCustomerInfo.state;
+                delete cleanCustomerInfo.zipCode;
+                delete cleanCustomerInfo.zipcode;
+            }
+
             const orderDocument = {
                 userId: orderData.userId || 'guest',
                 items: orderData.items,
@@ -91,11 +97,10 @@ export async function POST(req) {
                     tip: 0,
                     total: 0
                 },
-                customerInfo: orderData.customerInfo || {},
-                tipPercentage: orderData.tipPercentage || 0,
-                status: orderData.status || 'pending',
-                createdAt: new Date(),
-                updatedAt: new Date()
+                customerInfo: cleanCustomerInfo,
+                tipPercentage: parseFloat(orderData.tipPercentage) || 0,
+                status: 'complete',
+                createdAt: new Date()
             };
 
             // Insert the order

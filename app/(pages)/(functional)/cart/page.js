@@ -90,7 +90,7 @@ export default function Cart() {
         const orderData = {
             customerInfo,
             isGuest,
-            tipPercentage: selectedTipPercentage,
+            tipPercentage: selectedTipPercentage === 'custom' ? 0 : parseFloat(selectedTipPercentage),
             tipAmount: customTipAmount
         };
 
@@ -117,19 +117,42 @@ export default function Cart() {
         setCheckoutStep(0);
     };
 
-    // Handle proceed to checkout
-    const handleProceedToCheckout = async () => {
-        // If user is logged in, fetch their latest profile to get address information
-        if (isLoggedIn && user && user._id) {
+    // Fetch user profile once when the component mounts
+    useEffect(() => {
+        let isMounted = true;
+
+        const fetchUserData = async () => {
+            if (!isLoggedIn || !user || !token) return;
+
+            // Skip if we don't have a valid ID
+            const userId = user._id || user.userId;
+            if (!userId) return;
+
+            // Skip if we already have address data
+            if (user.address && user.address.line1) return;
+
             setIsLoadingUserProfile(true);
             try {
-                await fetchUserProfile(user._id, token);
+                await fetchUserProfile(userId, token);
             } catch (error) {
                 console.error('Error fetching user profile:', error);
             } finally {
-                setIsLoadingUserProfile(false);
+                if (isMounted) {
+                    setIsLoadingUserProfile(false);
+                }
             }
-        }
+        };
+
+        fetchUserData();
+
+        return () => {
+            isMounted = false;
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Handle proceed to checkout
+    const handleProceedToCheckout = () => {
         setCheckoutStep(1);
     };
 

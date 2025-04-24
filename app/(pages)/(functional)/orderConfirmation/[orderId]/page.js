@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { usePickupTime } from '@/hooks/usePickupTime';
 import FeaturedItems from "@/components/featuredItems";
 import OrderDetails from "@/components/orderDetails";
 import Link from 'next/link';
+import Image from 'next/image';
 
-export default function orderConfirmation({ params }) {
-    const { orderId } = params;
+export default function OrderConfirmation({ params }) {
+    // Use React.use() to unwrap the params promise
+    const resolvedParams = use(params);
+    const orderId = resolvedParams.orderId;
     const [order, setOrder] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -85,38 +87,63 @@ export default function orderConfirmation({ params }) {
     return (
         <div>
             <main className="justify-center flex flex-wrap w-full p-8 min-h-[calc(100vh-12rem)]" role="main">
-                <div className="w-full max-w-4xl mx-auto">
-                    <div className="bg-whiteSmoke p-8 rounded-lg shadow-md mb-8">
-                        <div className="text-center mb-8">
-                            <h1 className="text-3xl font-bold text-teal mb-2">Order Complete!</h1>
-                            <p className="text-xl">Thank you for your order</p>
-                            <p className="text-neutral-600 mt-2">Order #{orderId}</p>
-                        </div>
-
-                        {order ? (
-                            <OrderDetails
-                                items={formatItems(order.items)}
-                                subtotal={order.bill?.subtotal || 0}
-                                tax={order.bill?.tax || 0}
-                                tipAmount={order.bill?.tip || 0}
-                                tipPercentage={order.tipPercentage || 0}
-                                total={parseFloat(order.bill?.subtotal || 0) + parseFloat(order.bill?.tax || 0) + parseFloat(order.bill?.tip || 0)}
-                            />
-                        ) : (
-                            <div className="bg-white p-6 rounded-lg shadow-md">
-                                <p className="text-center text-neutral-600">Order details not available</p>
+                <div className="w-full lg:w-7/12 lg:mr-8">
+                    <div className="bg-white p-8 rounded-lg shadow-md mb-8">
+                        <div className="mb-8">
+                            <div className="inline-block mb-4">
+                                <Image src="/checkmark.svg" alt="checkmark" width={24} height={24} className="mr-1 md:mr-4 w-12 h-12" />
                             </div>
-                        )}
-
+                            <div className="inline-block mb-4">
+                                <p className="text-neutral-600 mt-2">Order #{orderId}</p>
+                                <h2 className="mb-2">Thank you, {order.customerInfo?.firstName || 'Guest'}!</h2>
+                            </div>
+                            <div className="pb-4 mb-4 border-b border-neutral-300">
+                                <p className="text-lg md:text-xl">Your order is confirmed.</p>
+                                <p className="text-lg md:text-xl">We have accepted your order and we are getting it ready.</p>
+                            </div>
+                            <div className="pb-4 mb-4 border-b border-neutral-300">
+                                {order.customerInfo.address?.line1 ? (
+                                    <>
+                                        <p className="font-semibold mb-1">Billing Address:</p>
+                                        <p>{order.customerInfo.firstName + ' ' + order.customerInfo.lastName}</p>
+                                        <p>{order.customerInfo.address.line1}</p>
+                                        {order.customerInfo.address.line2 && <p>{order.customerInfo.address.line2}</p>}
+                                        <p>
+                                            {[order.customerInfo.address.city, order.customerInfo.address.state, order.customerInfo.address.zipcode]
+                                                .filter(Boolean)
+                                                .join(', ')}
+                                        </p>
+                                    </>
+                                ) : ("")}
+                            </div>
+                            <div >
+                                <p className="font-semibold mb-1">Payment Method:</p>
+                                <p>Pay at Store</p>
+                            </div>
+                        </div>
                         <div className="mt-8 flex justify-center">
                             <button
                                 onClick={() => router.push('/menu')}
-                                className="actionButton"
-                            >
-                                Return to Menu
+                                className="actionButton"> Return to Menu
                             </button>
                         </div>
                     </div>
+                </div>
+                <div className="w-full lg:w-4/12 mt-8 lg:mt-0">
+                    {order ? (
+                        <OrderDetails
+                            items={formatItems(order.items)}
+                            subtotal={order.bill?.subtotal || 0}
+                            tax={order.bill?.tax || 0}
+                            tipAmount={order.bill?.tip || 0}
+                            tipPercentage={order.tipPercentage || 0}
+                            total={parseFloat(order.bill?.subtotal || 0) + parseFloat(order.bill?.tax || 0) + parseFloat(order.bill?.tip || 0)}
+                        />
+                    ) : (
+                        <div className="bg-white p-6 rounded-lg shadow-md">
+                            <p className="text-center text-neutral-600">Order details not available</p>
+                        </div>
+                    )}
                 </div>
             </main>
             <div className='bg-teal h-12'></div>

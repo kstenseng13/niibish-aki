@@ -74,7 +74,7 @@ export default function OrderDetails({ items, subtotal, tax, tipAmount, tipPerce
                     <span>$ {tax.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between mb-2">
-                    <span>Tip ({typeof tipPercentage === 'string' ? 'Custom' : `${tipPercentage}%`}):</span>
+                    <span>Tip {tipPercentage ? `(${tipPercentage}%)` : ''}:</span>
                     <span>$ {parseFloat(tipAmount).toFixed(2)}</span>
                 </div>
             </div>
