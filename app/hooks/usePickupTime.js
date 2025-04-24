@@ -1,23 +1,13 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export function usePickupTime(minutesFromNow = 15, roundToMinutes = 15) {
     const [pickupTime, setPickupTime] = useState(null);
 
-    useEffect(() => {
-        calculatePickupTime();
-
-        const intervalId = setInterval(() => {
-            calculatePickupTime();
-        }, 60000);
-
-        return () => clearInterval(intervalId);
-    }, [minutesFromNow, roundToMinutes]);
-
-    const calculatePickupTime = () => {
+    // Use useCallback to memoize the function
+    const calculatePickupTime = useCallback(() => {
         const now = new Date();
-
         const calculatedTime = new Date(now.getTime() + minutesFromNow * 60000);
 
         const minutes = calculatedTime.getMinutes();
@@ -30,12 +20,21 @@ export function usePickupTime(minutesFromNow = 15, roundToMinutes = 15) {
         }
 
         setPickupTime(calculatedTime);
-    };
+    }, [minutesFromNow, roundToMinutes]);
+
+    // Set up the interval
+    useEffect(() => {
+        calculatePickupTime();
+
+        const intervalId = setInterval(() => {
+            calculatePickupTime();
+        }, 60000);
+
+        return () => clearInterval(intervalId);
+    }, [calculatePickupTime]);
 
     const formattedTime = pickupTime ? formatTime(pickupTime) : '';
-
     const formattedDate = pickupTime ? formatDate(pickupTime) : '';
-
     const isToday = pickupTime ? isPickupToday(pickupTime) : false;
 
     return {

@@ -69,6 +69,19 @@ export async function PUT(req) {
             updateFields.phoneNumber = sanitizeInput(userInput.phoneNumber);
         }
 
+        if (userInput.address && typeof userInput.address === 'object') {
+            const sanitizedAddress = {};
+            if (userInput.address.line1) sanitizedAddress.line1 = sanitizeInput(userInput.address.line1);
+            if (userInput.address.line2) sanitizedAddress.line2 = sanitizeInput(userInput.address.line2);
+            if (userInput.address.city) sanitizedAddress.city = sanitizeInput(userInput.address.city);
+            if (userInput.address.state) sanitizedAddress.state = sanitizeInput(userInput.address.state);
+            if (userInput.address.zipcode) sanitizedAddress.zipcode = sanitizeInput(userInput.address.zipcode);
+
+            if (Object.keys(sanitizedAddress).length > 0) {
+                updateFields.address = sanitizedAddress;
+            }
+        }
+
         // Verify that the new password isn't the same as the current password
         if (userInput.password) {
             const passwordMatches = await bcrypt.compare(userInput.password, existingUser.password);
@@ -122,15 +135,31 @@ export async function GET(req) {
         logger.info("GET request received for user");
         const userData = await verifyToken(req);
 
+        // Log the user data from token for debugging
+        logger.info(`User data from token: ${JSON.stringify(userData)}`);
+
+        // Convert _id to ObjectId if it's a string
+        let userId = userData.userId || userData._id;
+        if (typeof userId === 'string') {
+            try {
+                userId = new ObjectId(userId);
+                logger.info(`Converted string ID to ObjectId: ${userId}`);
+            } catch (error) {
+                logger.error(`Failed to convert ID to ObjectId: ${error.message}`);
+                return new Response(JSON.stringify({ message: "Invalid user ID format" }), { status: 400 });
+            }
+        }
+
         const client = new MongoClient(uri);
         await client.connect();
         logger.info("Connected to MongoDB.");
         const database = client.db("niibish-aki");
         const collection = database.collection("users");
 
-        const user = await collection.findOne({ _id: userData._id });
+        logger.info(`Looking for user with ID: ${userId}`);
+        const user = await collection.findOne({ _id: userId });
         if (!user) {
-            logger.warn(`User not found: ${userData._id}`);
+            logger.warn(`User not found: ${userId}`);
             return new Response(JSON.stringify({ message: "User not found" }), { status: 404 });
         }
 

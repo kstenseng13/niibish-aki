@@ -1,19 +1,20 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import { useUser } from './userContext';
 
 function generateUniqueId() {
-    return 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    return 'id_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
 }
 
 const CartContext = createContext();
 
 export function CartProvider({ children }) {
+    const { user, isLoggedIn, token } = useUser();
     const [cartItems, setCartItems] = useState([]);
     const [productImages, setProductImages] = useState({});
     const [isLoading, setIsLoading] = useState(false);
     const [checkoutStep, setCheckoutStep] = useState(0);
-    const [paymentMethod, setPaymentMethod] = useState('credit');
     const [tipPercentage, setTipPercentage] = useState(15);
     const [checkoutError, setCheckoutError] = useState('');
     const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -80,8 +81,7 @@ export function CartProvider({ children }) {
                 tip: parseFloat(tipAmount),
                 total: parseFloat(total)
             },
-            paymentMethod,
-            status: "pending"
+            status: "complete"
         };
 
         return {
@@ -92,7 +92,7 @@ export function CartProvider({ children }) {
             formattedItems,
             orderData
         };
-    }, [cartItems, tipPercentage, paymentMethod]);
+    }, [cartItems, tipPercentage]);
 
     // Cart Actions
     const addItemToCart = useCallback(async (item) => {
@@ -228,13 +228,111 @@ export function CartProvider({ children }) {
         localStorage.removeItem('cartItems');
     }, []);
 
+    // Function to update user address if logged in
+    const updateUserAddress = useCallback(async (address) => {
+        if (!isLoggedIn || !user || !token || !address) return;
+
+        try {
+            // Make sure we're sending the address in the format the API expects
+            // The API expects address to be a property of the update object, not the entire body
+            const response = await fetch(`/api/user/${user._id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    address: {
+                        line1: address.line1 || '',
+                        line2: address.line2 || '',
+                        city: address.city || '',
+                        state: address.state || '',
+                        zipcode: address.zipcode || ''
+                    }
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Failed to update user address:', errorData);
+            } else {
+                console.log('User address updated successfully');
+            }
+        } catch (error) {
+            console.error('Error updating user address:', error);
+        }
+    }, [isLoggedIn, user, token]);
+
     const startCheckout = useCallback(async (orderData) => {
         try {
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // If user is logged in, update their address
+            if (isLoggedIn && user && orderData?.customerInfo?.address) {
+                await updateUserAddress(orderData.customerInfo.address);
+            }
+
+            // Prepare the order data for API
+            const apiOrderData = {
+                // Don't include _id - MongoDB will generate it
+                userId: isLoggedIn && user ? user._id : (orderData?.customerInfo?.email || 'guest'),
+                items: cartItems.map(item => ({
+                    type: item.type || 'tea',
+                    itemId: item.itemId,
+                    name: item.name,
+                    size: item.size,
+                    addIns: item.addIns || [],
+                    quantity: item.quantity || 1,
+                    price: item.totalPrice || item.price || 0
+                })),
+                bill: {
+                    subtotal: cartCalculations.subtotal,
+                    tax: cartCalculations.tax,
+                    tip: parseFloat(orderData?.tipAmount) || (cartCalculations.subtotal * (parseFloat(orderData?.tipPercentage || tipPercentage) / 100)),
+                    total: parseFloat(cartCalculations.subtotal) + parseFloat(cartCalculations.tax) + (parseFloat(orderData?.tipAmount) || (cartCalculations.subtotal * (parseFloat(orderData?.tipPercentage || tipPercentage) / 100)))
+                },
+                customerInfo: orderData?.customerInfo || {},
+                // Save address information separately for easier access
+                address: orderData?.customerInfo?.address || {},
+                isGuest: orderData?.isGuest || true,
+                tipPercentage: parseFloat(orderData?.tipPercentage) || parseFloat(tipPercentage) || 0,
+                status: 'complete',
+                createdAt: new Date().toISOString()
+            };
+
+            // Submit to the API
+            let orderId = null;
+
+            try {
+                const response = await fetch('/api/order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(apiOrderData),
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`API error: ${response.status} - ${errorText}`);
+                }
+
+                const data = await response.json();
+
+                if (data.orderId) {
+                    orderId = data.orderId;
+                } else {
+                    throw new Error('No order ID returned from API');
+                }
+            } catch (apiError) {
+                console.error('API order creation error:', apiError);
+                throw new Error(`Failed to create order: ${apiError.message}`);
+            }
+
+            // Clear the cart after successful checkout
             clearCart();
+
             return {
                 success: true,
-                orderId: generateUniqueId()
+                orderId: orderId
             };
         } catch (error) {
             console.error('Error starting checkout:', error);
@@ -243,15 +341,21 @@ export function CartProvider({ children }) {
                 error: error.message
             };
         }
-    }, [clearCart]);
+    }, [clearCart, cartItems, cartCalculations, tipPercentage, isLoggedIn, user, updateUserAddress]);
 
     // Checkout handling
-    const processCheckout = useCallback(async () => {
+    const processCheckout = useCallback(async (customerOrderData = {}) => {
         setIsCheckingOut(true);
         setCheckoutError('');
 
         try {
-            const result = await startCheckout(cartCalculations.orderData);
+            // Merge cart data with customer provided data
+            const orderData = {
+                ...cartCalculations.orderData,
+                ...customerOrderData
+            };
+
+            const result = await startCheckout(orderData);
             if (result.success) {
                 setCheckoutStep(3); // Success step
                 clearCart();
@@ -275,9 +379,9 @@ export function CartProvider({ children }) {
         productImages,
         isLoading,
         isCheckingOut,
+        setIsCheckingOut,
         checkoutStep,
         checkoutError,
-        paymentMethod,
         tipPercentage,
         itemToEdit,
         addItemToCart,
@@ -285,7 +389,6 @@ export function CartProvider({ children }) {
         updateItemQuantity,
         clearCart,
         processCheckout,
-        setPaymentMethod,
         setTipPercentage,
         setCheckoutStep,
         setItemForEdit,
@@ -296,9 +399,9 @@ export function CartProvider({ children }) {
         productImages,
         isLoading,
         isCheckingOut,
+        setIsCheckingOut,
         checkoutStep,
         checkoutError,
-        paymentMethod,
         tipPercentage,
         itemToEdit,
         addItemToCart,
