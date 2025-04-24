@@ -20,14 +20,18 @@ export default function Navbar() {
     return (
         <div>
             <nav className="navBarContainer">
-                <div className="m-auto w-96 basis-2/3 ">
-                    <div className="ml-4 sentient">
-                        <Link href="/">
-                            <h1>Niibish Aki</h1>
-                        </Link>
-                    </div>
-                    <div className="italic ml-20">
-                        <span>Tea of the Earth</span>
+                <div className="m-auto w-96 basis-2/3">
+                    <div className="ml-4">
+                        <div style={{width: 'fit-content'}}>
+                            <Link href="/">
+                                <div className="sentient">
+                                    <h1 className="mb-0">Niibish Aki</h1>
+                                </div>
+                            </Link>
+                            <div className="italic text-sm text-center">
+                                <span>Tea of the Earth</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div className="navBarMenu lg:hidden hover:text-stone-950" id="navbarMenu">
