@@ -44,20 +44,6 @@ export default function OrderConfirmation({ params }) {
         }
     }, [orderId]);
 
-    const formatItems = (items) => {
-        if (!items || !Array.isArray(items)) return [];
-
-        return items.map(item => ({
-            ...item,
-            imagePath: item.imagePath || `/images/menu/${item.type || 'tea'}.jpg`,
-            totalPrice: item.price * (item.quantity || 1),
-            cartItemId: item.itemId || `item-${Math.random().toString(36).substring(2, 9)}`,
-            type: item.type || 'tea',
-            name: item.name || 'Tea',
-            size: item.size || 'Medium'
-        }));
-    };
-
     if (isLoading) {
         return (
             <div className="min-h-screen bg-whiteSmoke flex items-center justify-center">
@@ -130,7 +116,7 @@ export default function OrderConfirmation({ params }) {
                 <div className="w-full lg:w-4/12 mt-8 lg:mt-0">
                     {order ? (
                         <OrderDetails
-                            items={formatItems(order.items)}
+                            items={order.items || []}
                             subtotal={order.bill?.subtotal || 0}
                             tax={order.bill?.tax || 0}
                             tipAmount={order.bill?.tip || 0}

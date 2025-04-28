@@ -19,7 +19,7 @@ export default function RegisterForm() {
     const { login } = useAuth();
 
     const validateForm = () => {
-        const usernameRegex = /^\S+$/; // No spaces in username
+        const usernameRegex = /^\S+$/;
 
         if (!formData.firstName || !formData.lastName || !formData.username || !formData.email || !formData.password || !formData.repeatPassword) {
             return 'All fields are required.';
@@ -66,7 +66,7 @@ export default function RegisterForm() {
 
             try {
 
-                //create new user object that does not include repeat password to send to server
+                //create new user object that does not include repeat password
                 let newUserData = {
                     firstName: formData.firstName,
                     lastName: formData.lastName,
@@ -98,6 +98,7 @@ export default function RegisterForm() {
 
                 // Update user data
                 const userData = {
+                    _id: user._id,
                     firstName: user.firstName,
                     lastName: user.lastName,
                     username: user.username,

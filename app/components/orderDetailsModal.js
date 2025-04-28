@@ -57,8 +57,6 @@ export default function OrderDetailsModal({ order, onClose }) {
             }
         };
         window.addEventListener('keydown', handleEsc);
-
-        // Prevent scrolling of the body when modal is open
         document.body.style.overflow = 'hidden';
 
         return () => {
@@ -81,12 +79,11 @@ export default function OrderDetailsModal({ order, onClose }) {
     const tipPercentage = order.tipPercentage || 0;
     const total = parseFloat(subtotal) + parseFloat(tax) + parseFloat(tipAmount);
 
+    // Just calculate totalPrice and use a unique ID for each item
+    // TODO: see if we can get rid of this cartItemId because IDk if it's necessary right now
     const items = order.items?.map(item => ({
         ...item,
         cartItemId: item.itemId || `item-${Math.random().toString(36).substring(2, 9)}`,
-        type: item.type || 'tea',
-        name: item.name || 'Tea',
-        size: item.size || 'Medium',
         totalPrice: item.price * (item.quantity || 1)
     })) || [];
 
@@ -148,7 +145,13 @@ export default function OrderDetailsModal({ order, onClose }) {
                                     >
                                         <div className="flex justify-between">
                                             <span className="font-medium">
-                                                {item.size} {item.type} {item.name}
+                                                {item.category !== 4 ? (
+                                                    <>
+                                                        {item.size} {item.type} {item.name}
+                                                    </>
+                                                ) : (
+                                                    <>{item.name}</>
+                                                )}
                                                 {item.quantity > 1 && <span className="text-sm text-neutral-600 ml-1">(x{item.quantity})</span>}
                                             </span>
                                             <span>$ {(item.totalPrice || (item.price * (item.quantity || 1))).toFixed(2)}</span>

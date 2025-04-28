@@ -61,11 +61,11 @@ export function CartProvider({ children }) {
 
         const formattedItems = cartItems.map(item => ({
             cartItemId: item.cartItemId,
-            name: item.name || "Tea",
+            name: item.name,
             size: item.size,
             type: item.type,
             imagePath: item.imagePath,
-            altText: item.altText || "Tea Product",
+            altText: item.altText || "Product",
             addIns: item.addIns || [],
             price: item.basePrice || item.price || 0,
             totalPrice: item.totalPrice || 0,
@@ -233,8 +233,6 @@ export function CartProvider({ children }) {
         if (!isLoggedIn || !user || !token || !address) return;
 
         try {
-            // Make sure we're sending the address in the format the API expects
-            // The API expects address to be a property of the update object, not the entire body
             const response = await fetch(`/api/user/${user._id}`, {
                 method: 'PUT',
                 headers: {
@@ -272,17 +270,27 @@ export function CartProvider({ children }) {
 
             // Prepare the order data for API
             const apiOrderData = {
-                // Don't include _id - MongoDB will generate it
                 userId: isLoggedIn && user ? user._id : (orderData?.customerInfo?.email || 'guest'),
-                items: cartItems.map(item => ({
-                    type: item.type || 'tea',
-                    itemId: item.itemId,
-                    name: item.name,
-                    size: item.size,
-                    addIns: item.addIns || [],
-                    quantity: item.quantity || 1,
-                    price: item.totalPrice || item.price || 0
-                })),
+                items: cartItems.map(item => {
+                    const baseItem = {
+                        itemId: item.itemId,
+                        name: item.name,
+                        quantity: item.quantity || 1,
+                        price: item.totalPrice || item.price || 0,
+                        category: item.category
+                    };
+
+                    if (item.category === 4) {
+                        return baseItem;
+                    } else {
+                        return {
+                            ...baseItem,
+                            type: item.type || 'tea',
+                            size: item.size,
+                            addIns: item.addIns || []
+                        };
+                    }
+                }),
                 bill: {
                     subtotal: cartCalculations.subtotal,
                     tax: cartCalculations.tax,
@@ -290,7 +298,6 @@ export function CartProvider({ children }) {
                     total: parseFloat(cartCalculations.subtotal) + parseFloat(cartCalculations.tax) + (parseFloat(orderData?.tipAmount) || (cartCalculations.subtotal * (parseFloat(orderData?.tipPercentage || tipPercentage) / 100)))
                 },
                 customerInfo: orderData?.customerInfo || {},
-                // Save address information separately for easier access
                 address: orderData?.customerInfo?.address || {},
                 isGuest: orderData?.isGuest || true,
                 tipPercentage: parseFloat(orderData?.tipPercentage) || parseFloat(tipPercentage) || 0,
@@ -298,7 +305,6 @@ export function CartProvider({ children }) {
                 createdAt: new Date().toISOString()
             };
 
-            // Submit to the API
             let orderId = null;
 
             try {

@@ -15,6 +15,21 @@ export default function ProductModal({ item, onClose }) {
     const isEditMode = !!itemToEdit;
     const isSnack = item?.category === 4;
 
+    const handleQuantityChange = (e) => {
+        const value = Number(e.target.value);
+        if (value > 0) {
+            setQuantity(value);
+        } else {
+            setQuantity(1);
+        }
+    };
+
+    const validateQuantityOnBlur = (e) => {
+        if (Number(e.target.value) < 1) {
+            setQuantity(1);
+        }
+    };
+
     useEffect(() => {
         const fetchAddIns = async () => {
             try {
@@ -23,7 +38,7 @@ export default function ProductModal({ item, onClose }) {
                 const data = await res.json();
                 setAddIns(data);
 
-                // If we're in edit mode and have add-ins, set the selected add-ins
+                // If we're in edit mode and have addins, set the selected addins
                 if (itemToEdit?.addIns && itemToEdit.addIns.length > 0) {
                     const selectedAddInsMap = {};
                     itemToEdit.addIns.forEach(addIn => {
@@ -112,12 +127,17 @@ export default function ProductModal({ item, onClose }) {
     };
 
     const handleAddToCart = async () => {
+        if (quantity <= 0) {
+            setError('Quantity must be at least 1');
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             let success;
 
             if (isEditMode && itemToEdit) {
-                // Check if anything has actually changed
+                // Check if anything has changed
                 const hasChanges =
                     type !== itemToEdit.type ||
                     size !== itemToEdit.size ||
@@ -280,7 +300,14 @@ export default function ProductModal({ item, onClose }) {
                             <div className="flex items-center gap-2 w-1/3 md:w-1/4">
                                 <button onClick={() => setQuantity(q => Math.max(1, q - 1))}
                                     className="w-6 h-6 p-2 flex items-center justify-center rounded-full border border-neutral-300 text-xl hover:cursor-pointer">−</button>
-                                <input type="number" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} min={1} className="w-16 text-center p-2 border rounded" />
+                                <input
+                                    type="number"
+                                    value={quantity}
+                                    onChange={handleQuantityChange}
+                                    min={1}
+                                    onBlur={validateQuantityOnBlur}
+                                    className="w-16 text-center p-2 border rounded"
+                                />
                                 <button onClick={() => setQuantity(q => q + 1)}
                                     className="w-6 h-6 p-2 flex items-center justify-center rounded-full border border-neutral-300 text-xl hover:cursor-pointer">+</button>
                             </div>

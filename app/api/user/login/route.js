@@ -41,10 +41,26 @@ export async function POST(req) {
         // Generate JWT Token
         const token = jwt.sign({ userId: user._id, username: user.username }, JWT_SECRET, { expiresIn: "7d" });
 
+        // Process user object to ensure consistent format
+        const processedUser = {
+            ...user,
+            _id: user._id.toString(),
+            address: user.address || {
+                line1: '',
+                line2: '',
+                city: '',
+                state: '',
+                zipcode: ''
+            }
+        };
+
+        // Remove password from the user object
+        delete processedUser.password;
+
         await client.close();
         logger.info(`User logged in successfully: ${username}`);
 
-        return new Response(JSON.stringify({ message: "Login successful", token, user: user }), { status: 200 });
+        return new Response(JSON.stringify({ message: "Login successful", token, user: processedUser }), { status: 200 });
 
     } catch (error) {
         logger.error(`Login error: ${error.message}`);

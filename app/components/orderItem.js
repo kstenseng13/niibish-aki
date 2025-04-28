@@ -79,7 +79,7 @@ export default function OrderItem({ orderItem }) {
                 <div className="flex flex-nowrap">
                     <div className="grow">
                         <span className="text-lg xl:text-2xl font-semibold">
-                            {orderItem.type ? `${orderItem.type} ${orderItem.name}` : orderItem.name}
+                            {orderItem.category !== 4 && orderItem.type ? `${orderItem.type} ${orderItem.name}` : orderItem.name}
                         </span>
                     </div>
                     <div className="grow pt-1 flex justify-end gap-2">
@@ -94,7 +94,7 @@ export default function OrderItem({ orderItem }) {
                     </div>
                 </div>
                 <div className="flex justify-between">
-                    <p className="font-medium">{orderItem.size ? `${orderItem.size}` : ""}</p>
+                    <p className="font-medium">{orderItem.category !== 4 && orderItem.size ? `${orderItem.size}` : ""}</p>
                     <p>$ {(orderItem.price || 0).toFixed(2)}</p>
                 </div>
 
