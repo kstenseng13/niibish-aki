@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useCart } from "../context/cartContext";
+import { useItemCalculations } from "@/hooks/useItemCalculations";
 
 export default function ProductModal({ item, onClose }) {
     const { addItemToCart, isLoading, itemToEdit, updateCartItem, setItemForEdit } = useCart();
+    const { calculateSizeUpcharge, calculateAddInsPrice, calculateItemTotalPrice, formatPrice, prepareCartItem } = useItemCalculations();
     const [type, setType] = useState(itemToEdit?.type || "Iced");
     const [size, setSize] = useState(itemToEdit?.size || "Small");
     const [quantity, setQuantity] = useState(itemToEdit?.quantity || 1);
@@ -49,9 +51,13 @@ export default function ProductModal({ item, onClose }) {
 
     if (!item) return null;
 
-    const basePrice = typeof item.price === "object" && "$numberDecimal" in item.price ? parseFloat(item.price.$numberDecimal) : item.price;
-    const sizeUpcharge = size === "Medium" ? 0.75 : size === "Large" ? 1.10 : size === "Extra Large" ? 1.50 : 0;
+    // Use the hook to format the price
+    const basePrice = formatPrice(item.price);
 
+    // Use the hook to calculate size upcharge
+    const sizeUpcharge = calculateSizeUpcharge(size);
+
+    // Process add-ins
     const addInsArray = Object.entries(selectedAddIns)
         .map(([id, amount]) => {
             const addIn = addIns.find((a) => a._id === id);
@@ -60,40 +66,28 @@ export default function ProductModal({ item, onClose }) {
             return { _id: id, name: addIn.name, price: addIn.price, amount: quantity };
         }).filter(Boolean);
 
-    const totalAddInsPrice = addInsArray.reduce((total, addIn) => total + addIn.price * addIn.amount, 0);
+    // Use the hook to calculate add-ins price
+    const totalAddInsPrice = calculateAddInsPrice(addInsArray);
 
-    const totalPrice = isSnack ? basePrice * quantity : (basePrice + sizeUpcharge + totalAddInsPrice) * quantity;
-
-    const baseOrderItem = {
-        itemId: item._id,
-        name: item.name,
-        category: item.category,
-        imagePath: item.image,
-        altText: item.alt || item.name,
+    // Create customizations object
+    const customizations = {
         quantity,
-        totalPrice: parseFloat(totalPrice.toFixed(2))
+        type,
+        size,
+        addIns: addInsArray
     };
 
-    const orderItem = isSnack
-        ? {
-            ...baseOrderItem,
-            basePrice: basePrice,
-            price: parseFloat(totalPrice.toFixed(2))
-        }
-        : {
-            ...baseOrderItem,
-            type,
-            size,
-            basePrice: basePrice + sizeUpcharge,
-            addIns: addInsArray.map(addIn => ({
-                id: addIn._id,
-                name: addIn.name,
-                amount: addIn.amount,
-                price: parseFloat((addIn.price * addIn.amount).toFixed(2))
-            })),
-            price: parseFloat((basePrice + sizeUpcharge).toFixed(2)),
-            addInsPrice: parseFloat(totalAddInsPrice.toFixed(2))
-        };
+    // Use the hook to prepare the cart item
+    const orderItem = prepareCartItem(item, customizations);
+
+    // Calculate total price for display
+    const totalPrice = calculateItemTotalPrice({
+        category: item.category,
+        basePrice,
+        size,
+        addIns: addInsArray,
+        quantity
+    });
 
     const resetAndClose = () => {
         setType("Iced");

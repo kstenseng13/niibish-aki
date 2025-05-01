@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { usePickupTime } from '@/hooks/usePickupTime';
+import { useCart } from '@/context/cartContext';
+import { useItemCalculations } from '@/hooks/useItemCalculations';
 
 function renderAddIns(item) {
     if (!item.addIns || item.addIns.length === 0) {
@@ -36,6 +38,71 @@ function renderAddIns(item) {
 
 export default function OrderDetailsModal({ order, onClose }) {
     const { formattedTime: pickupTime, isToday } = usePickupTime();
+    const { addItemToCart } = useCart();
+    const { prepareCartItem } = useItemCalculations();
+
+    // State to track loading status
+    const [isReordering, setIsReordering] = useState(false);
+
+    // Function to add all items from a previous order to the cart
+    const handleReorder = async (items) => {
+        if (!items || items.length === 0) return;
+
+        setIsReordering(true);
+        let successCount = 0;
+
+        try {
+            // Process items one by one
+            for (const item of items) {
+                if (!item.itemId) {
+                    console.warn('Item missing itemId, skipping', item);
+                    continue;
+                }
+
+                try {
+                    // Fetch current menu item data
+                    const response = await fetch(`/api/menu/${item.itemId}`);
+
+                    if (!response.ok) {
+                        console.warn(`Failed to fetch menu item ${item.itemId}`, await response.text());
+                        continue;
+                    }
+
+                    const menuItem = await response.json();
+
+                    // Prepare customizations from the previous order
+                    const customizations = {
+                        quantity: item.quantity || 1,
+                        type: item.type,
+                        size: item.size,
+                        addIns: item.addIns
+                    };
+
+                    // Use the hook to prepare the cart item with all calculations
+                    const newCartItem = prepareCartItem(menuItem, customizations);
+
+                    // Add to cart
+                    await addItemToCart(newCartItem);
+                    successCount++;
+                } catch (error) {
+                    console.error(`Error processing item ${item.itemId}:`, error);
+                }
+            }
+
+            // Show confirmation and close modal
+            if (successCount > 0) {
+                alert(`${successCount} item(s) added to cart!`);
+                onClose();
+            } else {
+                alert('Failed to add items to cart. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error reordering items:', error);
+            alert('An error occurred while adding items to cart.');
+        } finally {
+            setIsReordering(false);
+        }
+    };
 
     // Format date
     const formatDate = (dateString) => {
@@ -179,10 +246,18 @@ export default function OrderDetailsModal({ order, onClose }) {
                         </div>
                     </div>
 
-                    <div className="flex justify-end">
+                    <div className="flex justify-end space-x-4">
+                        <button
+                            onClick={() => handleReorder(items)}
+                            disabled={isReordering}
+                            className="bg-teal hover:bg-tealDark text-white font-medium py-2 px-4 rounded transition-colors disabled:bg-neutral-400 disabled:cursor-not-allowed"
+                        >
+                            {isReordering ? 'Adding...' : 'Add to Cart'}
+                        </button>
                         <button
                             onClick={onClose}
                             className="actionButton"
+                            disabled={isReordering}
                         >
                             Close
                         </button>

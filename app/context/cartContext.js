@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { useUser } from './userContext';
+import { useItemCalculations } from '@/hooks/useItemCalculations';
 
 function generateUniqueId() {
     return 'id_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
@@ -11,6 +12,7 @@ const CartContext = createContext();
 
 export function CartProvider({ children }) {
     const { user, isLoggedIn, token } = useUser();
+    const { calculateItemTotalPrice } = useItemCalculations();
     const [cartItems, setCartItems] = useState([]);
     const [productImages, setProductImages] = useState({});
     const [isLoading, setIsLoading] = useState(false);
@@ -56,7 +58,7 @@ export function CartProvider({ children }) {
         const subtotal = cartItems.reduce((total, item) => total + (item.totalPrice || 0), 0);
         const taxRate = 0.0825;
         const tax = subtotal * taxRate;
-        const tipAmount = (subtotal * (tipPercentage / 100)).toFixed(2);
+        const tipAmount = parseFloat((subtotal * (tipPercentage / 100)).toFixed(2));
         const total = (parseFloat(subtotal) + parseFloat(tax) + parseFloat(tipAmount)).toFixed(2);
 
         const formattedItems = cartItems.map(item => ({
@@ -141,40 +143,16 @@ export function CartProvider({ children }) {
 
             setCartItems(prevItems => prevItems.map(item => {
                 if (item.cartItemId === cartItemId) {
-                    let unitPrice;
-
-                    if (item.basePrice) {
-                        unitPrice = item.basePrice;
-                    }
-                    else if (item.totalPrice && item.quantity && item.quantity > 0) {
-                        unitPrice = item.totalPrice / item.quantity;
-                    }
-                    else {
-                        unitPrice = item.price || 0;
-                    }
-
-                    const addInsPrice = item.addIns?.reduce((total, addIn) => {
-                        if (typeof addIn === 'object' && addIn.price) {
-                            return total + (addIn.price * (addIn.amount || 1));
-                        }
-                        return total;
-                    }, 0) || 0;
-
-                    const sizeUpcharge = item.size === "Medium" ? 0.75 :
-                                        item.size === "Large" ? 1.10 :
-                                        item.size === "Extra Large" ? 1.50 : 0;
-
-                    if (item.basePrice && !item.addInsPrice) {
-                        unitPrice = unitPrice + sizeUpcharge + addInsPrice;
-                    }
-
-                    const newTotalPrice = unitPrice * validQuantity;
-
-                    return {
+                    // Create a copy of the item with the new quantity
+                    const updatedItem = {
                         ...item,
-                        quantity: validQuantity,
-                        totalPrice: newTotalPrice
+                        quantity: validQuantity
                     };
+
+                    // Use the hook to calculate the new total price
+                    updatedItem.totalPrice = calculateItemTotalPrice(updatedItem);
+
+                    return updatedItem;
                 }
                 return item;
             }));
@@ -185,7 +163,7 @@ export function CartProvider({ children }) {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [calculateItemTotalPrice]);
 
     const setItemForEdit = useCallback((cartItemId) => {
         if (cartItemId === null) {
@@ -205,6 +183,11 @@ export function CartProvider({ children }) {
         try {
             setIsLoading(true);
 
+            // Ensure the total price is calculated correctly
+            if (!updatedItem.totalPrice) {
+                updatedItem.totalPrice = calculateItemTotalPrice(updatedItem);
+            }
+
             setCartItems(prevItems => prevItems.map(item => {
                 if (item.cartItemId === updatedItem.cartItemId) {
                     return updatedItem;
@@ -221,7 +204,7 @@ export function CartProvider({ children }) {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [calculateItemTotalPrice]);
 
     const clearCart = useCallback(() => {
         setCartItems([]);
@@ -265,8 +248,9 @@ export function CartProvider({ children }) {
 
     const startCheckout = useCallback(async (orderData) => {
         try {
-            // If user is logged in, update their address
-            if (isLoggedIn && user && orderData?.customerInfo?.address) {
+            // If user is logged in and doesn't have an address yet, update their address
+            if (isLoggedIn && user && orderData?.customerInfo?.address &&
+                (!user.address || !user.address.line1)) {
                 await updateUserAddress(orderData.customerInfo.address);
             }
 

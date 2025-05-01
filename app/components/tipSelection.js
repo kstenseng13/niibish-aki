@@ -14,7 +14,7 @@ export default function TipSelection({ subtotal, onTipChange, initialTipPercenta
         if (isCustomTip && customTip) {
             return parseFloat(customTip);
         } else {
-            return (subtotal * (tipPercentage / 100)).toFixed(2);
+            return parseFloat((subtotal * (tipPercentage / 100)).toFixed(2));
         }
     }, [isCustomTip, customTip, subtotal, tipPercentage]);
 
@@ -89,7 +89,7 @@ export default function TipSelection({ subtotal, onTipChange, initialTipPercenta
             </div>
 
             <div className="text-right text-sm text-teal">
-                Tip Amount: $ {calculateTipAmount()}
+                Tip Amount: $ {parseFloat(calculateTipAmount()).toFixed(2)}
             </div>
         </div>
     );

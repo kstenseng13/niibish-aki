@@ -117,7 +117,7 @@ export default function OrderItem({ orderItem }) {
                                 className="w-6 h-6 p-2 flex items-center justify-center rounded-full border border-neutral-300 text-xl hover:cursor-pointer">+</button>
                         </div>
                     </div>
-                    <p className="font-bold text-xl">$ {(orderItem.totalPrice || orderItem.price || 0).toFixed(2)}</p>
+                    <p className="font-bold text-xl">$ {parseFloat(orderItem.totalPrice || orderItem.price || 0).toFixed(2)}</p>
                 </div>
             </div>
         </section>

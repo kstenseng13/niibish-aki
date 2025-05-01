@@ -15,7 +15,7 @@ export function useCheckout() {
   const [checkoutError, setCheckoutError] = useState('');
 
   // Calculate tip amount based on subtotal and percentage
-  const tipAmount = (orderData.bill.subtotal * (tipPercentage / 100)).toFixed(2);
+  const tipAmount = parseFloat((orderData.bill.subtotal * (tipPercentage / 100)).toFixed(2));
 
   // Calculate final total with tip
   const finalTotal = (

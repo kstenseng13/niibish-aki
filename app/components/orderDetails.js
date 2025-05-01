@@ -26,7 +26,7 @@ function renderAddIns(item) {
                 return (
                     <div key={addInKey} className="flex justify-between">
                         <span>• {addInName}{amountText ? `, ${amountText}` : ''}</span>
-                        <span>+ $ {addInPrice.toFixed(2)}</span>
+                        <span>+ $ {parseFloat(addInPrice).toFixed(2)}</span>
                     </div>
                 );
             })}
