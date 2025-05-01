@@ -1,4 +1,4 @@
-import { MongoClient, ServerApiVersion } from "mongodb";
+import { MongoClient } from "mongodb";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { loadEnvConfig } from '@next/env';
@@ -13,8 +13,8 @@ export async function POST(req) {
     try {
         logger.info("POST request received for user login.");
 
-        const { username, password } = await req.json();
-        sanitizeInput(username);
+        let { username, password } = await req.json();
+        username = sanitizeInput(username).toLowerCase();
         sanitizeInput(password);
         const client = new MongoClient(uri);
 
@@ -39,7 +39,10 @@ export async function POST(req) {
         }
 
         // Generate JWT Token
-        const token = jwt.sign({ userId: user._id, username: user.username }, JWT_SECRET, { expiresIn: "7d" });
+        const token = jwt.sign({
+            userId: user._id,
+            username: user.username
+        }, JWT_SECRET, { expiresIn: "7d" });
 
         await client.close();
         logger.info(`User logged in successfully: ${username}`);

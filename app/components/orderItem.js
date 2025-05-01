@@ -7,7 +7,6 @@ export default function OrderItem({ orderItem }) {
     const [quantity, setQuantity] = useState(orderItem.quantity || 1);
     const { productImages, removeItemFromCart, updateItemQuantity, cartItems, setItemForEdit } = useCart();
 
-    // Keep local quantity in sync with cart context
     useEffect(() => {
         const currentItem = cartItems.find(item => item.cartItemId === orderItem.cartItemId);
         if (currentItem && currentItem.quantity !== quantity) {
@@ -17,11 +16,9 @@ export default function OrderItem({ orderItem }) {
 
     // Update quantity in cart
     const updateQuantity = (newQuantity) => {
-        // Ensure quantity is at least 1
         const validQuantity = Math.max(1, newQuantity);
         setQuantity(validQuantity);
 
-        // Update the cart context with the new quantity
         updateItemQuantity(orderItem.cartItemId, validQuantity);
     };
 
@@ -65,7 +62,7 @@ export default function OrderItem({ orderItem }) {
                     <span>• {addInName}</span>
                     <span className="text-neutral-500">{amountText}</span>
                 </div>
-                <p className>$ {addInPrice.toFixed(2)}</p>
+                <p className="text-right">$ {addInPrice.toFixed(2)}</p>
             </div>
         );
     };

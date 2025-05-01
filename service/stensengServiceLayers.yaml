@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Niibish Aki
   description: API for everything needed in the Niibish Aki web application.
-  version: 0.0.1
+  version: 1.0.0
 paths:
   /user/{userId}:
     get:
@@ -130,7 +130,7 @@ paths:
       tags:
         - User
       summary: Create a new user.
-      description: Creates a new user.
+      description: Creates a new user with hashed password and returns a JWT token.
       operationId: createUser
       requestBody:
         description: User details for account creation
@@ -144,8 +144,14 @@ paths:
           description: User successfully created
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/User'
+              examples:
+                Response:
+                  value: |-
+                    {
+                    "message": "User created successfully",
+                    "token": "jwt-token-here",
+                    "user": { ... }
+                    }
         '400':
           description: Bad request
           content:
@@ -156,11 +162,22 @@ paths:
                     {
                     "message": "Bad request."
                     }
+        '409':
+          description: Username already exists
+          content:
+            application/json:
+              examples:
+                Response:
+                  value: |-
+                    {
+                    "message": "Username already exists!"
+                    }
   /user/login:
     post:
       tags:
         - User
       summary: User login
+      description: Authenticates a user and returns a JWT token
       operationId: userLogin
       requestBody:
         description: User credentials for authentication
@@ -170,7 +187,7 @@ paths:
             schema:
               type: object
               properties:
-                userName:
+                username:
                   type: string
                 password:
                   type: string
@@ -183,7 +200,9 @@ paths:
                 Response:
                   value: |-
                     {
-                    "message": "Successfully authenticated."
+                    "message": "Login successful",
+                    "token": "jwt-token-here",
+                    "user": { ... }
                     }
         '401':
           description: Unauthorized - Invalid credentials
@@ -193,150 +212,51 @@ paths:
                 Response:
                   value: |-
                     {
-                    "message": "Invalid credentials."
+                    "message": "Invalid username or password"
                     }
-  /user/favorites/{userId}:
-    get:
-      tags:
-        - User
-      summary: Retrieve user favorites
-      description: Gets a list of the user's favorite items.
-      operationId: getUserFavorites
-      parameters:
-        - name: userId
-          in: path
-          description: The user's ID
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Successfully retrieved favorites
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Favorite'
-        '400':
-          description: Invalid userId specified
-          content:
-            application/json:
-              examples:
-                Response:
-                  value: |-
-                    {
-                    "message": "Invalid userId specified."
-                    }
-        '404':
-          description: User not found
-          content:
-            application/json:
-              examples:
-                Response:
-                  value: |-
-                    {
-                    "message": "User not found."
-                    }
-    post:
-      tags:
-        - User
-      summary: Add an item to favorites
-      description: Allows a user to mark a menu item as a favorite.
-      operationId: addUserFavorite
-      parameters:
-        - name: userId
-          in: path
-          description: The user's ID
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Favorite'
-      responses:
-        '201':
-          description: Favorite item added successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Favorite'
-        '400':
-          description: Invalid request body
-          content:
-            application/json:
-              examples:
-                Response:
-                  value: |-
-                    {
-                    "message": "Invalid request body."
-                    }
-        '404':
-          description: User ID not found
-          content:
-            application/json:
-              examples:
-                Response:
-                  value: |-
-                    {
-                    "message": "User not found."
-                    }
-  /user/favorites/{favoriteId}:
-    delete:
-      tags:
-        - User
-      summary: Remove a favorite item
-      description: Allows a user to remove an item from their favorites.
-      operationId: removeUserFavorite
-      parameters:
-        - name: favoriteId
-          in: path
-          required: true
-          description: The ID of the favorite item
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Favorite item removed successfully
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Favorite'
-        '404':
-          description: Favorite item not found
-          content:
-            application/json:
-              examples:
-                Response:
-                  value: |-
-                    {
-                    "message": "Favorited item not found."
-                    }
+
   /order:
     post:
       tags:
         - Order
       summary: Create a new order
-      description: Allows a user to create an order.
+      description: Creates a new order or adds an item to an existing cart.
       operationId: createOrder
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Order'
+              oneOf:
+                - $ref: '#/components/schemas/Order'
+                - type: object
+                  properties:
+                    userId:
+                      type: string
+                    item:
+                      type: object
       responses:
+        '200':
+          description: Item added to existing cart
+          content:
+            application/json:
+              examples:
+                Response:
+                  value: |-
+                    {
+                    "orderId": "order-id-here"
+                    }
         '201':
           description: Order created successfully
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/Order'
+              examples:
+                Response:
+                  value: |-
+                    {
+                    "message": "Order created successfully",
+                    "orderId": "order-id-here"
+                    }
         '400':
           description: Invalid request body
           content:
@@ -345,7 +265,7 @@ paths:
                 Response:
                   value: |-
                     {
-                    "message": "Invalid request body."
+                    "message": "Order must contain items"
                     }
   /order/{orderId}:
     get:
@@ -368,51 +288,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Order'
-        '404':
-          description: Order not found
-          content:
-            application/json:
-              examples:
-                Response:
-                  value: |-
-                    {
-                    "message": "Order not found."
-                    }
-    put:
-      tags:
-        - Order
-      summary: Update an order
-      description: Updates an order.
-      operationId: updateOrder
-      parameters:
-        - name: orderId
-          in: path
-          required: true
-          description: The ID of the order
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Order'
-      responses:
-        '200':
-          description: Order updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Order'
         '400':
-          description: Invalid request body
+          description: Invalid order ID format
           content:
             application/json:
               examples:
                 Response:
                   value: |-
                     {
-                    "message": "Invalid request body."
+                    "message": "Invalid order ID format"
                     }
         '404':
           description: Order not found
@@ -422,48 +306,15 @@ paths:
                 Response:
                   value: |-
                     {
-                    "message": "Order not found."
+                    "message": "Order not found"
                     }
-    delete:
-      tags:
-        - Order
-      summary: Delete an order.
-      description: Used to remove a cart.
-      operationId: deleteOrder
-      parameters:
-        - name: orderId
-          in: path
-          required: true
-          description: The ID of the order
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Order successfully deleted
-          content:
-            application/json:
-              examples:
-                Response:
-                  value: |-
-                    {
-                    "message": "Order successfully deleted."
-                    }
-        '404':
-          description: Order not found
-          content:
-            application/json:
-              examples:
-                Response:
-                  value: |-
-                    {
-                    "message": "Order not found."
-                    }
+
   /order/user/{userId}:
     get:
       tags:
         - Order
       summary: Get all orders for a user
-      description: Fetches all past orders placed by a specific user.
+      description: Fetches all completed orders placed by a specific user.
       operationId: getUserOrders
       parameters:
         - name: userId
@@ -481,6 +332,16 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Order'
+        '400':
+          description: Invalid user ID format
+          content:
+            application/json:
+              examples:
+                Response:
+                  value: |-
+                    {
+                    "message": "Invalid user ID format"
+                    }
         '404':
           description: No orders found for user
           content:
@@ -489,7 +350,7 @@ paths:
                 Response:
                   value: |-
                     {
-                    "message": "No orders found for user."
+                    "message": "No orders found for this user"
                     }
   /menu:
     get:
@@ -584,7 +445,7 @@ paths:
                     {
                     "message": "Item not found."
                     }
-  /menu/featuredItems:
+  /menu/featured:
     get:
       tags:
         - Menu
@@ -601,7 +462,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/Item'
 
-  /menu/addIns:
+  /menu/add-ins:
     get:
       tags:
         - Menu
@@ -629,7 +490,7 @@ components:
           type: string
         lastName:
           type: string
-        userName:
+        username:
           type: string
         password:
           type: string
@@ -660,20 +521,32 @@ components:
           description: MongoDB ObjectId
         userId:
           type: string
-          description: Reference to a User (_id)
+          description: Reference to a User (_id) or 'guest'
         items:
           type: array
           items:
             type: object
             properties:
-              type:
-                type: string
-                enum:
-                  - tea
-                  - snack
               itemId:
                 type: string
                 description: Reference to an Item (_id)
+              name:
+                type: string
+              category:
+                type: integer
+                description: Category code (0 = featured, 1 = seasonal, 2 = milk, 3 = fruit, 4 = snacks)
+              type:
+                type: string
+                enum:
+                  - Iced
+                  - Hot
+              size:
+                type: string
+                enum:
+                  - Small
+                  - Medium
+                  - Large
+                  - Extra Large
               addIns:
                 type: array
                 items:
@@ -685,13 +558,17 @@ components:
                     name:
                       type: string
                     amount:
-                      type: integer
+                      type: number
+                      format: double
                     price:
                       type: number
                       format: double
               quantity:
                 type: integer
               price:
+                type: number
+                format: double
+              totalPrice:
                 type: number
                 format: double
         bill:
@@ -709,6 +586,26 @@ components:
             total:
               type: number
               format: double
+        customerInfo:
+          type: object
+          properties:
+            firstName:
+              type: string
+            lastName:
+              type: string
+            email:
+              type: string
+            phone:
+              type: string
+            address:
+              $ref: '#/components/schemas/Address'
+        address:
+          $ref: '#/components/schemas/Address'
+        isGuest:
+          type: boolean
+        tipPercentage:
+          type: number
+          format: double
         status:
           type: string
           enum:
@@ -729,16 +626,16 @@ components:
         description:
           type: string
         category:
-          type: string
-          enum:
-            - featured
-            - seasonal
-            - milk
-            - fruit
-            - snacks
+          type: integer
+          description: Category code (0 = featured, 1 = seasonal, 2 = milk, 3 = fruit, 4 = snacks)
         price:
-          type: number
-          format: double
+          oneOf:
+            - type: number
+              format: double
+            - type: object
+              properties:
+                $numberDecimal:
+                  type: string
         alt:
           type: string
           description: Alt text for the item's image
@@ -747,7 +644,7 @@ components:
           description: APA citation for the item's image source
         image:
           type: string
-          description: Link address for the image's source.
+          description: Path to the image file
     AddIn:
       type: object
       properties:
@@ -762,37 +659,25 @@ components:
         description:
           type: string
         price:
-          type: number
-          format: double
-    Favorite:
+          oneOf:
+            - type: number
+              format: double
+            - type: object
+              properties:
+                $numberDecimal:
+                  type: string
+    Address:
       type: object
       properties:
-        _id:
+        line1:
           type: string
-          description: MongoDB ObjectId
-        menuId:
+        line2:
           type: string
-          description: Reference to an Item (_id)
-        userId:
+          nullable: true
+        city:
           type: string
-          description: Reference to a User (_id)
-        name:
+        state:
           type: string
-        addIns:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      description: Reference to an Add-In (_id)
-                    name:
-                      type: string
-                    amount:
-                      type: integer
-                    price:
-                      type: number
-                      format: double
-        price:
-          type: number
-          format: double
+        zipcode:
+          type: string
+

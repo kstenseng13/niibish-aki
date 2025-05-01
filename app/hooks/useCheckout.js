@@ -1,12 +1,8 @@
 "use client";
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useCart } from '../context/cartContext';
 
-/**
- * Custom hook for checkout process
- * @returns {Object} - Checkout state and handlers
- */
 export function useCheckout() {
   const { orderData } = useCart();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -14,27 +10,23 @@ export function useCheckout() {
   const [tipPercentage, setTipPercentage] = useState(15);
   const [checkoutError, setCheckoutError] = useState('');
 
-  // Calculate tip amount based on subtotal and percentage
   const tipAmount = parseFloat((orderData.bill.subtotal * (tipPercentage / 100)).toFixed(2));
 
-  // Calculate final total with tip
   const finalTotal = (
     parseFloat(orderData.bill.subtotal) +
     parseFloat(orderData.bill.tax) +
     parseFloat(tipAmount)
   ).toFixed(2);
 
-  // Update order data with tip and final total
-  const finalOrderData = {
+  const finalOrderData = useMemo(() => ({
     ...orderData,
     bill: {
       ...orderData.bill,
       tip: parseFloat(tipAmount),
       total: parseFloat(finalTotal)
     }
-  };
+  }), [orderData, tipAmount, finalTotal]);
 
-  // Handle checkout process
   const processCheckout = useCallback(async () => {
     setIsCheckingOut(true);
     setCheckoutError('');
@@ -58,12 +50,10 @@ export function useCheckout() {
     }
   }, [finalOrderData]);
 
-  // Go to next checkout step
   const nextStep = useCallback(() => {
     setCheckoutStep(prev => prev + 1);
   }, []);
 
-  // Go to previous checkout step
   const prevStep = useCallback(() => {
     setCheckoutStep(prev => Math.max(0, prev - 1));
   }, []);

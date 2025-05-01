@@ -44,7 +44,6 @@ export function CartProvider({ children }) {
         }
     }, []);
 
-    // Save cart to localStorage
     useEffect(() => {
         try {
             localStorage.setItem('cartItems', JSON.stringify(cartItems));
@@ -53,7 +52,6 @@ export function CartProvider({ children }) {
         }
     }, [cartItems]);
 
-    // All cart calculations in one place
     const cartCalculations = useMemo(() => {
         const subtotal = cartItems.reduce((total, item) => total + (item.totalPrice || 0), 0);
         const taxRate = 0.0825;
@@ -96,7 +94,6 @@ export function CartProvider({ children }) {
         };
     }, [cartItems, tipPercentage]);
 
-    // Cart Actions
     const addItemToCart = useCallback(async (item) => {
         try {
             setIsLoading(true);
@@ -143,13 +140,11 @@ export function CartProvider({ children }) {
 
             setCartItems(prevItems => prevItems.map(item => {
                 if (item.cartItemId === cartItemId) {
-                    // Create a copy of the item with the new quantity
                     const updatedItem = {
                         ...item,
                         quantity: validQuantity
                     };
 
-                    // Use the hook to calculate the new total price
                     updatedItem.totalPrice = calculateItemTotalPrice(updatedItem);
 
                     return updatedItem;
@@ -216,8 +211,6 @@ export function CartProvider({ children }) {
         if (!isLoggedIn || !user || !token || !address) return;
 
         try {
-            // Make sure we're sending the address in the format the API expects
-            // The API expects address to be a property of the update object, not the entire body
             const response = await fetch(`/api/user/${user._id}`, {
                 method: 'PUT',
                 headers: {
@@ -250,13 +243,11 @@ export function CartProvider({ children }) {
         try {
             // If user is logged in and doesn't have an address yet, update their address
             if (isLoggedIn && user && orderData?.customerInfo?.address &&
-                (!user.address || !user.address.line1)) {
+                (!user?.address?.line1)) {
                 await updateUserAddress(orderData.customerInfo.address);
             }
 
-            // Prepare the order data for API
             const apiOrderData = {
-                // Don't include _id - MongoDB will generate it
                 userId: isLoggedIn && user ? user._id : (orderData?.customerInfo?.email || 'guest'),
                 items: cartItems.map(item => ({
                     type: item.type || 'tea',
@@ -282,7 +273,6 @@ export function CartProvider({ children }) {
                 createdAt: new Date().toISOString()
             };
 
-            // Submit to the API
             let orderId = null;
 
             try {
@@ -310,8 +300,6 @@ export function CartProvider({ children }) {
                 console.error('API order creation error:', apiError);
                 throw new Error(`Failed to create order: ${apiError.message}`);
             }
-
-            // Clear the cart after successful checkout
             clearCart();
 
             return {
@@ -333,7 +321,6 @@ export function CartProvider({ children }) {
         setCheckoutError('');
 
         try {
-            // Merge cart data with customer provided data
             const orderData = {
                 ...cartCalculations.orderData,
                 ...customerOrderData

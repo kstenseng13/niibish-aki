@@ -102,7 +102,8 @@ export default function RegisterForm() {
                     lastName: user.lastName,
                     username: user.username,
                     email: user.email,
-                    phoneNumber: user.phoneNumber
+                    phoneNumber: user.phoneNumber,
+                    _id: user._id
                 };
 
                 // Log user in

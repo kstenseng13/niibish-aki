@@ -25,7 +25,6 @@ export default function ProductModal({ item, onClose }) {
                 const data = await res.json();
                 setAddIns(data);
 
-                // If we're in edit mode and have add-ins, set the selected add-ins
                 if (itemToEdit?.addIns && itemToEdit.addIns.length > 0) {
                     const selectedAddInsMap = {};
                     itemToEdit.addIns.forEach(addIn => {
@@ -50,14 +49,8 @@ export default function ProductModal({ item, onClose }) {
     }, [itemToEdit]);
 
     if (!item) return null;
-
-    // Use the hook to format the price
     const basePrice = formatPrice(item.price);
-
-    // Use the hook to calculate size upcharge
     const sizeUpcharge = calculateSizeUpcharge(size);
-
-    // Process add-ins
     const addInsArray = Object.entries(selectedAddIns)
         .map(([id, amount]) => {
             const addIn = addIns.find((a) => a._id === id);
@@ -65,22 +58,15 @@ export default function ProductModal({ item, onClose }) {
             const quantity = amount === "Easy" ? 0.5 : amount === "Regular" ? 1 : 1.5;
             return { _id: id, name: addIn.name, price: addIn.price, amount: quantity };
         }).filter(Boolean);
-
-    // Use the hook to calculate add-ins price
     const totalAddInsPrice = calculateAddInsPrice(addInsArray);
 
-    // Create customizations object
     const customizations = {
         quantity,
         type,
         size,
         addIns: addInsArray
     };
-
-    // Use the hook to prepare the cart item
     const orderItem = prepareCartItem(item, customizations);
-
-    // Calculate total price for display
     const totalPrice = calculateItemTotalPrice({
         category: item.category,
         basePrice,
@@ -96,8 +82,6 @@ export default function ProductModal({ item, onClose }) {
         setSelectedAddIns({});
         setExpanded(false);
         setError("");
-
-        // Clear the item being edited if there is one
         if (itemToEdit) {
             setItemForEdit(null);
         }
@@ -116,15 +100,15 @@ export default function ProductModal({ item, onClose }) {
                     type !== itemToEdit.type ||
                     size !== itemToEdit.size ||
                     quantity !== itemToEdit.quantity ||
-                    JSON.stringify(addInsArray.map(a => ({ id: a._id, amount: a.amount })).sort()) !==
-                    JSON.stringify((itemToEdit.addIns || []).map(a => ({ id: a.id, amount: a.amount })).sort());
+                    JSON.stringify(addInsArray.map(a => ({ id: a._id, amount: a.amount })).sort((a, b) => a.id.localeCompare(b.id))) !==
+                    JSON.stringify((itemToEdit.addIns || []).map(a => ({ id: a.id, amount: a.amount })).sort((a, b) => a.id.localeCompare(b.id)));
 
                 if (hasChanges) {
                     const sizeChanged = size !== itemToEdit.size;
-                    const addInsChanged = JSON.stringify(addInsArray.map(a => ({ id: a._id, amount: a.amount })).sort()) !==
-                        JSON.stringify((itemToEdit.addIns || []).map(a => ({ id: a.id, amount: a.amount })).sort());
+                    const addInsChanged = JSON.stringify(addInsArray.map(a => ({ id: a._id, amount: a.amount })).sort((a, b) => a.id.localeCompare(b.id))) !==
+                        JSON.stringify((itemToEdit.addIns || []).map(a => ({ id: a.id, amount: a.amount })).sort((a, b) => a.id.localeCompare(b.id)));
 
-                    let unitPrice = itemToEdit.price || 0; // Start with the original price
+                    let unitPrice = itemToEdit.price || 0;
                     let newAddInsPrice = itemToEdit.addInsPrice || 0;
 
                     // If size changed, adjust the price accordingly
@@ -194,7 +178,7 @@ export default function ProductModal({ item, onClose }) {
 
     return (
         <div className="modal-backdrop" onClick={resetAndClose}>
-            <div className="modal-content p-2 pt-4 md:p-4 md:pt-8" onClick={(e) => e.stopPropagation()} role="dialog" tabIndex={0}>
+            <div className="modal-content p-2 pt-4 md:p-4 md:pt-8" onClick={(e) => e.stopPropagation()} aria-modal="true" role="dialog">
                 <div className="flex flex-col h-full">
                     <div className="relative h-[250px] md:h-[300px] mx-4 md:mx-28 mt-2 mb-6 rounded overflow-hidden">
                         <Image src={`/images/menu/${item.image}`} alt={item.alt || item.name} fill style={{ objectFit: "cover" }} className="rounded" />

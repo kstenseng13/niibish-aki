@@ -27,7 +27,7 @@ export async function GET(req, { params }) {
             // Use the string constructor to avoid deprecation warning
             objectId = new ObjectId(String(itemId));
         } catch (error) {
-            logger.error(`Invalid ObjectId format: ${itemId}`);
+            logger.error(`Invalid ObjectId format: ${itemId}: ${error.message}`);
             return new Response(JSON.stringify({ message: "Invalid item ID format" }), { status: 400 });
         }
 
@@ -53,3 +53,4 @@ export async function GET(req, { params }) {
         return new Response(JSON.stringify({ message: "Something went wrong!" }), { status: 500 });
     }
 }
+

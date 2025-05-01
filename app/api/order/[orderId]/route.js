@@ -22,9 +22,9 @@ export async function GET(req, { params }) {
 
         let objectId;
         try {
-            objectId = new ObjectId(orderId);
+            objectId = new ObjectId(String(orderId));
         } catch (error) {
-            logger.error(`Invalid ObjectId format: ${orderId}`);
+            logger.error(`Invalid ObjectId format: ${orderId}: ${error.message}`);
             return new Response(JSON.stringify({ message: "Invalid order ID format" }), { status: 400 });
         }
 

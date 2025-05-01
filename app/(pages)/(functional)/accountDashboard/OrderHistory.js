@@ -22,7 +22,7 @@ export default function OrderHistory() {
 
     useEffect(() => {
         const fetchOrders = async () => {
-            if (!user || !user._id || !token) return;
+            if (!user?._id || !token) return;
 
             try {
                 setIsLoading(true);
@@ -123,8 +123,6 @@ export default function OrderHistory() {
                     }
 
                     const menuItem = await response.json();
-
-                    // Prepare customizations from the previous order
                     const customizations = {
                         quantity: item.quantity || 1,
                         type: item.type,
@@ -134,8 +132,6 @@ export default function OrderHistory() {
 
                     // Use the hook to prepare the cart item with all calculations
                     const newCartItem = prepareCartItem(menuItem, customizations);
-
-                    // Add to cart
                     await addItemToCart(newCartItem);
                     successCount++;
                 } catch (error) {
@@ -143,7 +139,6 @@ export default function OrderHistory() {
                 }
             }
 
-            // Show confirmation
             if (successCount > 0) {
                 alert(`${successCount} item(s) added to cart!`);
             } else {

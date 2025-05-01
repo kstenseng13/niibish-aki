@@ -69,8 +69,6 @@ export default function OrderDetailsModal({ order, onClose }) {
                     }
 
                     const menuItem = await response.json();
-
-                    // Prepare customizations from the previous order
                     const customizations = {
                         quantity: item.quantity || 1,
                         type: item.type,
@@ -78,10 +76,7 @@ export default function OrderDetailsModal({ order, onClose }) {
                         addIns: item.addIns
                     };
 
-                    // Use the hook to prepare the cart item with all calculations
                     const newCartItem = prepareCartItem(menuItem, customizations);
-
-                    // Add to cart
                     await addItemToCart(newCartItem);
                     successCount++;
                 } catch (error) {
@@ -89,7 +84,6 @@ export default function OrderDetailsModal({ order, onClose }) {
                 }
             }
 
-            // Show confirmation and close modal
             if (successCount > 0) {
                 alert(`${successCount} item(s) added to cart!`);
                 onClose();

@@ -57,7 +57,7 @@ export async function POST(req) {
 
             return new Response(JSON.stringify({ orderId: result.insertedId }), { status: 201 });
         }
-        // This is a full order creation (from the checkout process)
+        // This is a full order creation
         else {
             const orderData = requestBody;
 

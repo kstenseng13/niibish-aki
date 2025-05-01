@@ -1,7 +1,7 @@
 import { MongoClient, ObjectId } from "mongodb";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { loadEnvConfig } from '@next/env';
+import { loadEnvConfig } from "@next/env";
 import logger from "@/lib/dnaLogger";
 import { sanitizeInput } from "@/lib/sanitize";
 loadEnvConfig(process.cwd());
@@ -24,6 +24,7 @@ async function verifyToken(req) {
         }
         return decoded;
     } catch (error) {
+        logger.error(`Token verification failed: ${error.message}`);
         throw new Error("Invalid token");
     }
 }
@@ -31,99 +32,7 @@ async function verifyToken(req) {
 export async function PUT(req) {
     try {
         logger.info("PUT request received for user");
-        const tokenPayload = await verifyToken(req);
-        const userInput = await req.json();
-
-        if (!userInput) {
-            logger.error("User data is required!");
-            return new Response(JSON.stringify({ message: "User data is required!" }), { status: 400 });
-        }
-
-        const client = new MongoClient(uri);
-        await client.connect();
-        logger.info("Connected to MongoDB.");
-        const database = client.db("niibish-aki");
-        const collection = database.collection("users");
-
-        const existingUser = await collection.findOne({ _id: tokenPayload.userId });
-        if (!existingUser) {
-            logger.warn(`User not found: ${tokenPayload.userId}`);
-            return new Response(JSON.stringify({ message: "User not found" }), { status: 404 });
-        }
-
-        // Build an object with only the fields that were provided and are non-empty.
-        const updateFields = {};
-        if (userInput.firstName && userInput.firstName.trim() !== "") {
-            updateFields.firstName = sanitizeInput(userInput.firstName);
-        }
-        if (userInput.lastName && userInput.lastName.trim() !== "") {
-            updateFields.lastName = sanitizeInput(userInput.lastName);
-        }
-        if (userInput.username && userInput.username.trim() !== "") {
-            updateFields.username = sanitizeInput(userInput.username);
-        }
-        if (userInput.email && userInput.email.trim() !== "") {
-            updateFields.email = sanitizeInput(userInput.email);
-        }
-        if (userInput.phoneNumber && userInput.phoneNumber.trim() !== "") {
-            updateFields.phoneNumber = sanitizeInput(userInput.phoneNumber);
-        }
-
-        if (userInput.address && typeof userInput.address === 'object') {
-            const sanitizedAddress = {};
-            if (userInput.address.line1) sanitizedAddress.line1 = sanitizeInput(userInput.address.line1);
-            if (userInput.address.line2) sanitizedAddress.line2 = sanitizeInput(userInput.address.line2);
-            if (userInput.address.city) sanitizedAddress.city = sanitizeInput(userInput.address.city);
-            if (userInput.address.state) sanitizedAddress.state = sanitizeInput(userInput.address.state);
-            if (userInput.address.zipcode) sanitizedAddress.zipcode = sanitizeInput(userInput.address.zipcode);
-
-            if (Object.keys(sanitizedAddress).length > 0) {
-                updateFields.address = sanitizedAddress;
-            }
-        }
-
-        // Verify that the new password isn't the same as the current password
-        if (userInput.password) {
-            const passwordMatches = await bcrypt.compare(userInput.password, existingUser.password);
-            if (passwordMatches) {
-                logger.warn("New password cannot be the same as the current password.");
-                return new Response(JSON.stringify({ message: "New password cannot be the same as the current password." }), { status: 400 });
-            }
-            updateFields.password = await bcrypt.hash(userInput.password, 10);
-        }
-
-        // If updating username, check that it's not taken by another user
-        if (updateFields.username) {
-            const duplicateUser = await collection.findOne({
-                username: updateFields.username,
-                _id: { $ne: tokenPayload.userId }
-            });
-            if (duplicateUser) {
-                logger.warn("Username is already taken.");
-                return new Response(JSON.stringify({ message: "Username is already taken." }), { status: 400 });
-            }
-        }
-
-        if (Object.keys(updateFields).length === 0) {
-            return new Response(JSON.stringify({ message: "No valid fields provided for update." }), { status: 400 });
-        }
-
-        const result = await collection.updateOne(
-            { _id: tokenPayload.userId },
-            { $set: updateFields }
-        );
-
-        if (result.modifiedCount === 0) {
-            logger.warn("No changes were made to the user.");
-            return new Response(JSON.stringify({ message: "No changes made" }), { status: 400 });
-        }
-
-        const updatedUser = await collection.findOne({ _id: tokenPayload.userId });
-        if (updatedUser) {
-            delete updatedUser.password;
-        }
-
-        return new Response(JSON.stringify({ message: "Update successful", user: updatedUser }), { status: 200 });
+        return await handleUserUpdate(req);
     } catch (error) {
         logger.error(`Error updating user: ${error.message}`);
         return new Response(JSON.stringify({ message: "Something went wrong!" }), { status: 500 });
@@ -135,10 +44,8 @@ export async function GET(req) {
         logger.info("GET request received for user");
         const userData = await verifyToken(req);
 
-        // Log the user data from token for debugging
         logger.info(`User data from token: ${JSON.stringify(userData)}`);
 
-        // Convert _id to ObjectId if it's a string
         let userId = userData.userId || userData._id;
         if (typeof userId === 'string') {
             try {
@@ -169,4 +76,151 @@ export async function GET(req) {
         logger.error(`Error fetching user: ${error.message}`);
         return new Response(JSON.stringify({ message: "Something went wrong!" }), { status: 500 });
     }
+}
+
+async function handleUserUpdate(req) {
+    const tokenPayload = await verifyToken(req);
+    const userInput = await req.json();
+
+    if (!userInput) {
+        logger.error("User data is required!");
+        return new Response(JSON.stringify({ message: "User data is required!" }), { status: 400 });
+    }
+
+    const client = new MongoClient(uri);
+    await client.connect();
+    logger.info("Connected to MongoDB.");
+    
+    try {
+        const database = client.db("niibish-aki");
+        const collection = database.collection("users");
+
+        const existingUser = await collection.findOne({ _id: tokenPayload.userId });
+        if (!existingUser) {
+            logger.warn(`User not found: ${tokenPayload.userId}`);
+            return new Response(JSON.stringify({ message: "User not found" }), { status: 404 });
+        }
+
+        const updateResult = await processUserUpdate(collection, existingUser, userInput, tokenPayload.userId);
+        return updateResult;
+    } finally {
+        await client.close();
+    }
+}
+
+async function processUserUpdate(collection, existingUser, userInput, userId) {
+    const updateFields = buildUpdateFields(userInput);
+    
+    if (Object.keys(updateFields).length === 0) {
+        return new Response(JSON.stringify({ message: "No valid fields provided for update." }), { status: 400 });
+    }
+
+    // Handle password update
+    if (userInput.password) {
+        const passwordResult = await handlePasswordUpdate(userInput.password, existingUser.password);
+        if (passwordResult.error) {
+            return passwordResult.response;
+        }
+        updateFields.password = passwordResult.hashedPassword;
+    }
+
+    // Check username uniqueness
+    if (updateFields.username) {
+        const usernameResult = await checkUsernameUniqueness(collection, updateFields.username, userId);
+        if (usernameResult.error) {
+            return usernameResult.response;
+        }
+    }
+
+    return await updateUserAndRespond(collection, userId, updateFields);
+}
+
+function buildUpdateFields(userInput) {
+    const updateFields = {};
+    
+    // Process basic fields
+    const basicFields = ['firstName', 'lastName', 'username', 'email', 'phoneNumber'];
+    basicFields.forEach(field => {
+        if (userInput[field] && userInput[field].trim() !== "") {
+            updateFields[field] = field === 'username' 
+                ? sanitizeInput(userInput[field]).toLowerCase() 
+                : sanitizeInput(userInput[field]);
+        }
+    });
+
+    // Process address if provided
+    if (userInput.address && typeof userInput.address === 'object') {
+        const sanitizedAddress = {};
+        const addressFields = ['line1', 'line2', 'city', 'state', 'zipcode'];
+        
+        addressFields.forEach(field => {
+            if (userInput.address[field]) {
+                sanitizedAddress[field] = sanitizeInput(userInput.address[field]);
+            }
+        });
+
+        if (Object.keys(sanitizedAddress).length > 0) {
+            updateFields.address = sanitizedAddress;
+        }
+    }
+    
+    return updateFields;
+}
+
+async function handlePasswordUpdate(newPassword, currentPasswordHash) {
+    const passwordMatches = await bcrypt.compare(newPassword, currentPasswordHash);
+    if (passwordMatches) {
+        logger.warn("New password cannot be the same as the current password.");
+        return {
+            error: true,
+            response: new Response(
+                JSON.stringify({ message: "New password cannot be the same as the current password." }), 
+                { status: 400 }
+            )
+        };
+    }
+    
+    return {
+        error: false,
+        hashedPassword: await bcrypt.hash(newPassword, 10)
+    };
+}
+
+async function checkUsernameUniqueness(collection, username, userId) {
+    const duplicateUser = await collection.findOne({
+        username: username,
+        _id: { $ne: userId }
+    });
+    
+    if (duplicateUser) {
+        logger.warn("Username is already taken.");
+        return {
+            error: true,
+            response: new Response(
+                JSON.stringify({ message: "Username is already taken." }), 
+                { status: 400 }
+            )
+        };
+    }
+    
+    return { error: false };
+}
+
+async function updateUserAndRespond(collection, userId, updateFields) {
+    const result = await collection.updateOne(
+        { _id: userId },
+        { $set: updateFields }
+    );
+
+    if (result.modifiedCount === 0) {
+        logger.warn("No changes were made to the user.");
+        return new Response(JSON.stringify({ message: "No changes made" }), { status: 400 });
+    }
+
+    const updatedUser = await collection.findOne({ _id: userId });
+    if (updatedUser) {
+        delete updatedUser.password;
+    }
+
+    return new Response(JSON.stringify({ message: "Update successful", user: updatedUser }), { status: 200 });
 }

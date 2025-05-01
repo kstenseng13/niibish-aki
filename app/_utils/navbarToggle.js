@@ -1,21 +1,34 @@
-// src/utils/navbarToggle.js
 export function toggleNavbarMenu() {
-    document.addEventListener('click', function(event) {
-        var menuToggle = document.getElementById('toggleMenu');
-        var menu = document.getElementById('mobileMenu');
+    const closeMenu = () => {
+        const mobileMenu = document.getElementById('mobileMenu');
+        const toggleButton = document.getElementById('toggleMenu');
 
-        // Check if the click was inside the menu or the toggle button itself
-        if (menu && menuToggle && !menu.contains(event.target) && !menuToggle.contains(event.target)) {
-            if (menu.classList.contains('block')) {
-                menu.classList.add('hidden');
-                menu.classList.remove('block');
-                menuToggle.setAttribute('aria-expanded', 'false');
-            }
+        if (mobileMenu?.classList.contains('block')) {
+            mobileMenu.classList.add('hidden');
+            mobileMenu.classList.remove('block');
+            toggleButton?.setAttribute('aria-expanded', 'false');
         }
-        else if (menuToggle.contains(event.target)) {
-            menu.classList.toggle('hidden');
-            menu.classList.toggle('block');
-            menuToggle.setAttribute('aria-expanded', menu.classList.contains('block').toString());
+    };
+
+    const handleDocumentClick = (event) => {
+        const mobileMenu = document.getElementById('mobileMenu');
+        const toggleButton = document.getElementById('toggleMenu');
+
+        if (!mobileMenu || !toggleButton) return;
+
+        if (toggleButton.contains(event.target)) {
+            mobileMenu.classList.toggle('hidden');
+            mobileMenu.classList.toggle('block');
+            toggleButton.setAttribute('aria-expanded', mobileMenu.classList.contains('block').toString());
+            return;
         }
-    });
+
+        if (!mobileMenu.contains(event.target) && mobileMenu.classList.contains('block')) {
+            closeMenu();
+        }
+    };
+
+    document.addEventListener('click', handleDocumentClick);
+
+    return { closeMenu };
 }
