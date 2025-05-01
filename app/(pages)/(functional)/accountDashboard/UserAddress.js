@@ -17,9 +17,8 @@ export default function UserAddress() {
     const [success, setSuccess] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Initialize form with user address data when available
     useEffect(() => {
-        if (user && user.address) {
+        if (user?.address) {
             const initialData = {
                 line1: user.address.line1 || '',
                 line2: user.address.line2 || '',
@@ -79,7 +78,7 @@ export default function UserAddress() {
 
         try {
             // Make sure user and user._id exist
-            if (!user || !user._id) {
+            if (!user?._id) {
                 setError("User information is missing. Please try logging in again.");
                 setIsSubmitting(false);
                 return;
@@ -126,7 +125,6 @@ export default function UserAddress() {
             [name]: value,
         }));
 
-        // Clear success message when user starts editing
         if (success) {
             setSuccess(false);
         }

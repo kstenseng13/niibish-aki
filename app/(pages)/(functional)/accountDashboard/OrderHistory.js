@@ -5,11 +5,15 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '../../../context/userContext';
 import { useRouter } from 'next/navigation';
+import { useCart } from '@/context/cartContext';
+import { useItemCalculations } from '@/hooks/useItemCalculations';
 import OrderDetailsModal from '@/components/orderDetailsModal';
 
 export default function OrderHistory() {
     const { user, token } = useUser();
     const router = useRouter();
+    const { addItemToCart } = useCart();
+    const { prepareCartItem } = useItemCalculations();
     const [orders, setOrders] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -18,7 +22,7 @@ export default function OrderHistory() {
 
     useEffect(() => {
         const fetchOrders = async () => {
-            if (!user || !user._id || !token) return;
+            if (!user?._id || !token) return;
 
             try {
                 setIsLoading(true);
@@ -88,6 +92,64 @@ export default function OrderHistory() {
     const closeModal = () => {
         setShowModal(false);
         setTimeout(() => setSelectedOrder(null), 300);
+    };
+
+    const [reorderingId, setReorderingId] = useState(null);
+
+    const handleReorder = async (order) => {
+        if (!order.items || order.items.length === 0) {
+            alert('No items to reorder');
+            return;
+        }
+
+        setReorderingId(order._id);
+        let successCount = 0;
+
+        try {
+            // Process items one by one
+            for (const item of order.items) {
+                if (!item.itemId) {
+                    console.warn('Item missing itemId, skipping', item);
+                    continue;
+                }
+
+                try {
+                    // Fetch current menu item data
+                    const response = await fetch(`/api/menu/${item.itemId}`);
+
+                    if (!response.ok) {
+                        console.warn(`Failed to fetch menu item ${item.itemId}`, await response.text());
+                        continue;
+                    }
+
+                    const menuItem = await response.json();
+                    const customizations = {
+                        quantity: item.quantity || 1,
+                        type: item.type,
+                        size: item.size,
+                        addIns: item.addIns
+                    };
+
+                    // Use the hook to prepare the cart item with all calculations
+                    const newCartItem = prepareCartItem(menuItem, customizations);
+                    await addItemToCart(newCartItem);
+                    successCount++;
+                } catch (error) {
+                    console.error(`Error processing item ${item.itemId}:`, error);
+                }
+            }
+
+            if (successCount > 0) {
+                alert(`${successCount} item(s) added to cart!`);
+            } else {
+                alert('Failed to add items to cart. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error reordering items:', error);
+            alert('An error occurred while adding items to cart.');
+        } finally {
+            setReorderingId(null);
+        }
     };
 
     if (isLoading) {
@@ -165,12 +227,19 @@ export default function OrderHistory() {
                                         {order.status || 'Complete'}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4">
+                                <td className="px-6 py-4 flex space-x-4">
                                     <button
                                         onClick={() => viewOrderDetails(order)}
                                         className="font-medium text-teal hover:text-tealDark hover:underline"
                                     >
                                         View Details
+                                    </button>
+                                    <button
+                                        onClick={() => handleReorder(order)}
+                                        disabled={reorderingId === order._id}
+                                        className={`font-medium ${reorderingId === order._id ? 'text-neutral-400' : 'text-orange-600 hover:text-orange-800 hover:underline'}`}
+                                    >
+                                        {reorderingId === order._id ? 'Adding...' : 'Reorder'}
                                     </button>
                                 </td>
                             </tr>

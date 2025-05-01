@@ -22,7 +22,7 @@ export async function POST(req) {
         user = {
             firstName: sanitizeInput(user.firstName),
             lastName: sanitizeInput(user.lastName),
-            username: sanitizeInput(user.username),
+            username: sanitizeInput(user.username).toLowerCase(),
             email: sanitizeInput(user.email),
             phoneNumber: sanitizeInput(user.phoneNumber),
             password: user.password
@@ -34,8 +34,6 @@ export async function POST(req) {
 
         const database = client.db("niibish-aki");
         const collection = database.collection("users");
-
-        // Check if user already exists
         const existingUser = await collection.findOne({ username: user.username });
 
         if (existingUser) {
@@ -64,7 +62,10 @@ export async function POST(req) {
         logger.info("MongoDB connection closed.");
 
         /// Generate JWT Token for new user
-        const token = jwt.sign({ userId: response.insertedId, username: newUser.username }, JWT_SECRET, { expiresIn: "7d" });
+        const token = jwt.sign({
+            userId: response.insertedId,
+            username: newUser.username
+        }, JWT_SECRET, { expiresIn: "7d" });
 
         logger.info(`User registered successfully: ${newUser.username}`);
         return new Response(JSON.stringify({ message: "User created successfully", token, user: newUser }), { status: 201 });

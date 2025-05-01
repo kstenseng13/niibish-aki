@@ -70,7 +70,7 @@ export default function Cart() {
     };
 
     const handleCheckout = async () => {
-        if (!customerInfo || !customerInfo.email || !customerInfo.firstName || !customerInfo.lastName) {
+        if (!customerInfo?.email || !customerInfo?.firstName || !customerInfo?.lastName) {
             setCheckoutError('Please complete all required customer information fields.');
             setCheckoutStep(1); // Go back to customer info step
             return;
@@ -90,7 +90,6 @@ export default function Cart() {
         try {
             const result = await processCheckout(orderData);
             if (result.success) {
-                // Navigate to the order confirmation page
                 router.push(`/orderConfirmation/${result.orderId}`);
             } else {
                 setCheckoutError(result.error || 'Checkout failed. Please try again.');
@@ -110,7 +109,6 @@ export default function Cart() {
         setCheckoutStep(0);
     };
 
-    // Fetch user profile once when the component mounts
     useEffect(() => {
         let isMounted = true;
 
@@ -122,7 +120,7 @@ export default function Cart() {
             if (!userId) return;
 
             // Skip if we already have address data
-            if (user.address && user.address.line1) return;
+            if (user?.address?.line1) return;
 
             setIsLoadingUserProfile(true);
             try {

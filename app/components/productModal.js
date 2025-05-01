@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useCart } from "../context/cartContext";
+import { useItemCalculations } from "@/hooks/useItemCalculations";
 
 export default function ProductModal({ item, onClose }) {
     const { addItemToCart, isLoading, itemToEdit, updateCartItem, setItemForEdit } = useCart();
+    const { calculateSizeUpcharge, calculateAddInsPrice, calculateItemTotalPrice, formatPrice, prepareCartItem } = useItemCalculations();
     const [type, setType] = useState(itemToEdit?.type || "Iced");
     const [size, setSize] = useState(itemToEdit?.size || "Small");
     const [quantity, setQuantity] = useState(itemToEdit?.quantity || 1);
@@ -23,7 +25,6 @@ export default function ProductModal({ item, onClose }) {
                 const data = await res.json();
                 setAddIns(data);
 
-                // If we're in edit mode and have add-ins, set the selected add-ins
                 if (itemToEdit?.addIns && itemToEdit.addIns.length > 0) {
                     const selectedAddInsMap = {};
                     itemToEdit.addIns.forEach(addIn => {
@@ -48,10 +49,8 @@ export default function ProductModal({ item, onClose }) {
     }, [itemToEdit]);
 
     if (!item) return null;
-
-    const basePrice = typeof item.price === "object" && "$numberDecimal" in item.price ? parseFloat(item.price.$numberDecimal) : item.price;
-    const sizeUpcharge = size === "Medium" ? 0.75 : size === "Large" ? 1.10 : size === "Extra Large" ? 1.50 : 0;
-
+    const basePrice = formatPrice(item.price);
+    const sizeUpcharge = calculateSizeUpcharge(size);
     const addInsArray = Object.entries(selectedAddIns)
         .map(([id, amount]) => {
             const addIn = addIns.find((a) => a._id === id);
@@ -59,41 +58,22 @@ export default function ProductModal({ item, onClose }) {
             const quantity = amount === "Easy" ? 0.5 : amount === "Regular" ? 1 : 1.5;
             return { _id: id, name: addIn.name, price: addIn.price, amount: quantity };
         }).filter(Boolean);
+    const totalAddInsPrice = calculateAddInsPrice(addInsArray);
 
-    const totalAddInsPrice = addInsArray.reduce((total, addIn) => total + addIn.price * addIn.amount, 0);
-
-    const totalPrice = isSnack ? basePrice * quantity : (basePrice + sizeUpcharge + totalAddInsPrice) * quantity;
-
-    const baseOrderItem = {
-        itemId: item._id,
-        name: item.name,
-        category: item.category,
-        imagePath: item.image,
-        altText: item.alt || item.name,
+    const customizations = {
         quantity,
-        totalPrice: parseFloat(totalPrice.toFixed(2))
+        type,
+        size,
+        addIns: addInsArray
     };
-
-    const orderItem = isSnack
-        ? {
-            ...baseOrderItem,
-            basePrice: basePrice,
-            price: parseFloat(totalPrice.toFixed(2))
-        }
-        : {
-            ...baseOrderItem,
-            type,
-            size,
-            basePrice: basePrice + sizeUpcharge,
-            addIns: addInsArray.map(addIn => ({
-                id: addIn._id,
-                name: addIn.name,
-                amount: addIn.amount,
-                price: parseFloat((addIn.price * addIn.amount).toFixed(2))
-            })),
-            price: parseFloat((basePrice + sizeUpcharge).toFixed(2)),
-            addInsPrice: parseFloat(totalAddInsPrice.toFixed(2))
-        };
+    const orderItem = prepareCartItem(item, customizations);
+    const totalPrice = calculateItemTotalPrice({
+        category: item.category,
+        basePrice,
+        size,
+        addIns: addInsArray,
+        quantity
+    });
 
     const resetAndClose = () => {
         setType("Iced");
@@ -102,8 +82,6 @@ export default function ProductModal({ item, onClose }) {
         setSelectedAddIns({});
         setExpanded(false);
         setError("");
-
-        // Clear the item being edited if there is one
         if (itemToEdit) {
             setItemForEdit(null);
         }
@@ -122,15 +100,15 @@ export default function ProductModal({ item, onClose }) {
                     type !== itemToEdit.type ||
                     size !== itemToEdit.size ||
                     quantity !== itemToEdit.quantity ||
-                    JSON.stringify(addInsArray.map(a => ({ id: a._id, amount: a.amount })).sort()) !==
-                    JSON.stringify((itemToEdit.addIns || []).map(a => ({ id: a.id, amount: a.amount })).sort());
+                    JSON.stringify(addInsArray.map(a => ({ id: a._id, amount: a.amount })).sort((a, b) => a.id.localeCompare(b.id))) !==
+                    JSON.stringify((itemToEdit.addIns || []).map(a => ({ id: a.id, amount: a.amount })).sort((a, b) => a.id.localeCompare(b.id)));
 
                 if (hasChanges) {
                     const sizeChanged = size !== itemToEdit.size;
-                    const addInsChanged = JSON.stringify(addInsArray.map(a => ({ id: a._id, amount: a.amount })).sort()) !==
-                        JSON.stringify((itemToEdit.addIns || []).map(a => ({ id: a.id, amount: a.amount })).sort());
+                    const addInsChanged = JSON.stringify(addInsArray.map(a => ({ id: a._id, amount: a.amount })).sort((a, b) => a.id.localeCompare(b.id))) !==
+                        JSON.stringify((itemToEdit.addIns || []).map(a => ({ id: a.id, amount: a.amount })).sort((a, b) => a.id.localeCompare(b.id)));
 
-                    let unitPrice = itemToEdit.price || 0; // Start with the original price
+                    let unitPrice = itemToEdit.price || 0;
                     let newAddInsPrice = itemToEdit.addInsPrice || 0;
 
                     // If size changed, adjust the price accordingly
@@ -200,7 +178,7 @@ export default function ProductModal({ item, onClose }) {
 
     return (
         <div className="modal-backdrop" onClick={resetAndClose}>
-            <div className="modal-content p-2 pt-4 md:p-4 md:pt-8" onClick={(e) => e.stopPropagation()} role="dialog" tabIndex={0}>
+            <div className="modal-content p-2 pt-4 md:p-4 md:pt-8" onClick={(e) => e.stopPropagation()} aria-modal="true" role="dialog">
                 <div className="flex flex-col h-full">
                     <div className="relative h-[250px] md:h-[300px] mx-4 md:mx-28 mt-2 mb-6 rounded overflow-hidden">
                         <Image src={`/images/menu/${item.image}`} alt={item.alt || item.name} fill style={{ objectFit: "cover" }} className="rounded" />

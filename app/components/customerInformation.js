@@ -22,7 +22,6 @@ export default function CustomerInformation({ onInfoSubmit }) {
 
     // Only load user data once when component mounts or when user/login state changes
     useEffect(() => {
-        // Skip if already initialized or no user data available
         if (isInitialized || !isLoggedIn || !user) return;
 
         const newInfo = {

@@ -7,15 +7,28 @@ import { toggleNavbarMenu } from '../_utils/navbarToggle';
 import Link from 'next/link';
 import Image from 'next/image';
 import CartPreview from './cartPreview';
+import { usePathname } from 'next/navigation';
 
 export default function Navbar() {
-    const { isLoggedIn, logout } = useUser(); // Get login state and logout function
+    const { isLoggedIn, logout } = useUser();
     const { cartItems } = useCart();
     const [showCartPreview, setShowCartPreview] = useState(false);
+    const pathname = usePathname();
 
     useEffect(() => {
         toggleNavbarMenu();
     }, []);
+
+    useEffect(() => {
+        const mobileMenu = document.getElementById('mobileMenu');
+        if (mobileMenu?.classList.contains('block')) {
+            mobileMenu.classList.add('hidden');
+            mobileMenu.classList.remove('block');
+
+            const toggleButton = document.getElementById('toggleMenu');
+            toggleButton?.setAttribute('aria-expanded', 'false');
+        }
+    }, [pathname]);
 
     return (
         <div>

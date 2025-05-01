@@ -83,7 +83,7 @@ export default function AccountSettings() {
 
         try {
             // Make sure user and user._id exist
-            if (!user || !user._id) {
+            if (!user?._id) {
                 setError("User information is missing. Please try logging in again.");
                 setIsSubmitting(false);
                 return;

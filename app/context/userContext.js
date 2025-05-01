@@ -32,9 +32,8 @@ export const UserProvider = ({ children }) => {
         if (!userId || !authToken) return null;
 
         try {
-            // Check if we already have a complete profile with address
-            if (user && user.address && user.address.line1) {
-                return user; // Return existing user data if we already have address
+            if (user?.address?.line1) {
+                return user;
             }
 
             const response = await fetch(`/api/user/${userId}`, {
@@ -46,8 +45,6 @@ export const UserProvider = ({ children }) => {
             if (!response.ok) return null;
 
             const userData = await response.json();
-
-            // Ensure address is properly structured
             const processedUserData = {
                 ...userData,
                 address: userData.address || {
@@ -80,8 +77,6 @@ export const UserProvider = ({ children }) => {
 
         if (storedUserData && storedIsLoggedIn === "true" && storedToken) {
             const parsedUser = JSON.parse(storedUserData);
-
-            // Ensure address is properly structured
             const processedUser = {
                 ...parsedUser,
                 address: parsedUser.address || {
@@ -134,8 +129,7 @@ export const UserProvider = ({ children }) => {
         localStorage.setItem("isLoggedIn", JSON.stringify(true));
         localStorage.setItem("token", token);
 
-        // Only fetch profile if we don't have address data
-        if (data._id && (!data.address || !data.address.line1)) {
+        if (data._id && !data.address?.line1) {
             await fetchUserProfile(data._id, token);
         }
     }, [fetchUserProfile]);
