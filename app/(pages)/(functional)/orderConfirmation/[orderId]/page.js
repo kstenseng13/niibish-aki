@@ -96,7 +96,6 @@ export default function OrderConfirmation({ params }) {
                                 <h2 className="mb-2">Thank you, {order.customerInfo?.firstName || 'Guest'}!</h2>
                             </div>
                             <div className="pb-4 mb-4 border-b border-neutral-300">
-                                <p className="text-lg md:text-xl">Your order is confirmed.</p>
                                 <p className="text-lg md:text-xl">We have accepted your order and we are getting it ready.</p>
                             </div>
                             <div className="pb-4 mb-4 border-b border-neutral-300">

@@ -18,6 +18,9 @@ export default function ProductModal({ item, onClose }) {
     const isSnack = item?.category === 4;
 
     useEffect(() => {
+        // Prevent scrolling of the body when modal is open
+        document.body.style.overflow = 'hidden';
+        
         const fetchAddIns = async () => {
             try {
                 const res = await fetch("/api/menu/add-ins");

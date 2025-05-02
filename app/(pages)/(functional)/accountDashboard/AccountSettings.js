@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/userContext';
+import { validateUsername, validatePassword, validateEmail, validatePhoneNumber } from '@/_utils/formValidation';
 
 export default function AccountSettings() {
     const { user, token, setUser } = useAuth();
@@ -35,20 +36,25 @@ export default function AccountSettings() {
     }, [user]);
 
     const validateForm = () => {
-        const usernameRegex = /^\S+$/;
-        const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,16}$/;
+        // Only validate fields that have values
+        if (formData.username) {
+            const usernameError = validateUsername(formData.username);
+            if (usernameError) return usernameError;
+        }
 
-        if (formData.username && (!usernameRegex.test(formData.username) || formData.username.length < 5 || formData.username.length > 15)) {
-            return 'Username must be 5–15 characters and contain no spaces.';
+        if (formData.email) {
+            const emailError = validateEmail(formData.email);
+            if (emailError) return emailError;
+        }
+
+        if (formData.phoneNumber) {
+            const phoneError = validatePhoneNumber(formData.phoneNumber);
+            if (phoneError) return phoneError;
         }
 
         if (formData.password || formData.repeatPassword) {
-            if (!passwordRegex.test(formData.password)) {
-                return 'Password must be 8-16 characters and include at least one uppercase letter, one number, and one special character.';
-            }
-            if (formData.password !== formData.repeatPassword) {
-                return 'Passwords do not match.';
-            }
+            const passwordError = validatePassword(formData.password, formData.repeatPassword, true);
+            if (passwordError) return passwordError;
         }
 
         return '';
@@ -106,11 +112,9 @@ export default function AccountSettings() {
                 return;
             }
 
-            // Update the user context with the new data
             if (data.user) {
                 setUser(data.user);
 
-                // Update the original data to reflect the new values
                 setOriginalData({
                     ...originalData,
                     ...updatedUserData,
@@ -118,7 +122,6 @@ export default function AccountSettings() {
                     repeatPassword: ''
                 });
 
-                // Clear password fields after successful update
                 setFormData(prev => ({
                     ...prev,
                     password: '',
@@ -142,7 +145,6 @@ export default function AccountSettings() {
             [name]: value,
         }));
 
-        // Clear success message when user starts editing
         if (success) {
             setSuccess(false);
         }

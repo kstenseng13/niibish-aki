@@ -14,7 +14,6 @@ export default function OrderItem({ orderItem }) {
         }
     }, [cartItems, orderItem.cartItemId, quantity]);
 
-    // Update quantity in cart
     const updateQuantity = (newQuantity) => {
         const validQuantity = Math.max(1, newQuantity);
         setQuantity(validQuantity);
@@ -62,7 +61,7 @@ export default function OrderItem({ orderItem }) {
                     <span>• {addInName}</span>
                     <span className="text-neutral-500">{amountText}</span>
                 </div>
-                <p className="text-right">$ {addInPrice.toFixed(2)}</p>
+                <p className="text-right min-w-[45px]">$ {addInPrice.toFixed(2)}</p>
             </div>
         );
     };
@@ -70,9 +69,9 @@ export default function OrderItem({ orderItem }) {
     return (
         <section className="m-2 lg:mt-8 lg:mx-12 ml-0 flex flex-wrap bg-white p-2 md:p-4 rounded-lg shadow-md" id="orderSummaryItem">
             <div className="m-2 lg:m-6 inline-block align-top relative w-28 h-28 lg:w-36 lg:h-36">
-                <Image className="object-cover" src={orderItem.imagePath || (orderItem.itemId && productImages[orderItem.itemId])} alt={orderItem.altText} fill />
+                <Image className="object-cover rounded-md" src={orderItem.imagePath || (orderItem.itemId && productImages[orderItem.itemId])} alt={orderItem.altText} fill />
             </div>
-            <div className="ml-0 m-6 w-auto grow flex flex-col">
+            <div className="mx-0 md:mx-4 m-4 w-auto grow flex flex-col">
                 <div className="flex flex-nowrap">
                     <div className="grow">
                         <span className="text-lg xl:text-2xl font-semibold">

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/userContext';
+import { validateAddress } from '@/_utils/formValidation';
 
 export default function UserAddress() {
     const { user, token, setUser } = useAuth();
@@ -32,26 +33,7 @@ export default function UserAddress() {
     }, [user]);
 
     const validateForm = () => {
-        if (!formData.line1) {
-            return 'Address line 1 is required.';
-        }
-        if (!formData.city) {
-            return 'City is required.';
-        }
-        if (!formData.state) {
-            return 'State is required.';
-        }
-        if (!formData.zipcode) {
-            return 'Zip code is required.';
-        }
-
-        // Validate zip code format (5 digits or 5+4 format)
-        const zipRegex = /^\d{5}(-\d{4})?$/;
-        if (!zipRegex.test(formData.zipcode)) {
-            return 'Please enter a valid zip code (e.g., 12345 or 12345-6789).';
-        }
-
-        return '';
+        return validateAddress(formData);
     };
 
     const handleSubmit = async (e) => {
@@ -103,7 +85,6 @@ export default function UserAddress() {
                 return;
             }
 
-            // Update the user context with the new data
             if (data.user) {
                 setUser(data.user);
                 setOriginalData({ ...formData });

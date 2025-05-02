@@ -234,13 +234,6 @@ export default function OrderHistory() {
                                     >
                                         View Details
                                     </button>
-                                    <button
-                                        onClick={() => handleReorder(order)}
-                                        disabled={reorderingId === order._id}
-                                        className={`font-medium ${reorderingId === order._id ? 'text-neutral-400' : 'text-orange-600 hover:text-orange-800 hover:underline'}`}
-                                    >
-                                        {reorderingId === order._id ? 'Adding...' : 'Reorder'}
-                                    </button>
                                 </td>
                             </tr>
                         ))}

@@ -142,6 +142,10 @@ export default function Cart() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [checkoutStep]);
+
     const handleProceedToCheckout = () => {
         setCheckoutStep(1);
     };
@@ -202,7 +206,7 @@ export default function Cart() {
                     {checkoutStep === 2 && (
                         <>
                             <h2>Payment</h2>
-                            <div className="bg-white p-6 rounded-lg shadow-md mb-6 m-12">
+                            <div className="bg-white p-6 rounded-lg shadow-md my-6 md:my-4 md:m-12">
                                 <h4 className="text-lg font-semibold mb-4">Payment Method</h4>
                                 <div className="mb-8">
                                     <ul className="list-disc pl-8">

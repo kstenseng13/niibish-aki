@@ -1,11 +1,7 @@
-import { MongoClient, ObjectId } from "mongodb";
-import { loadEnvConfig } from "@next/env";
 import logger from "@/lib/dnaLogger";
+import { connectToDatabase, isValidObjectId } from "@/lib/mongodb";
 
-loadEnvConfig(process.cwd());
-const uri = process.env.MONGODB_URI;
-
-export async function GET(req, { params }) {
+export async function GET(_, { params }) {
     try {
         const { userId } = params;
 
@@ -13,17 +9,13 @@ export async function GET(req, { params }) {
             return new Response(JSON.stringify({ message: "User ID is required" }), { status: 400 });
         }
 
-        const client = new MongoClient(uri);
-        await client.connect();
-        logger.info("Connected to MongoDB.");
-
-        const database = client.db("niibish-aki");
-        const ordersCollection = database.collection("order");
-
-        if (!ObjectId.isValid(userId)) {
+        if (!isValidObjectId(userId)) {
             logger.error(`Invalid ObjectId format: ${userId}`);
             return new Response(JSON.stringify({ message: "Invalid user ID format" }), { status: 400 });
         }
+
+        const { db } = await connectToDatabase();
+        const ordersCollection = db.collection("order");
 
         const orders = await ordersCollection.find({
             userId: userId,
@@ -34,9 +26,6 @@ export async function GET(req, { params }) {
             logger.warn(`No orders found for user: ${userId}`);
             return new Response(JSON.stringify({ message: "No orders found for this user" }), { status: 404 });
         }
-
-        await client.close();
-        logger.info("Closed MongoDB connection.");
 
         return new Response(JSON.stringify(orders), {
             status: 200,

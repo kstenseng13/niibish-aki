@@ -54,9 +54,9 @@ export default function Navbar() {
                             className="w-10 pr-2 hover:cursor-pointer"/>
                     </button>
                 </div>
-                <div className="hidden navBarMenu lg:block lg:text-xl hover:text-black shadow-md bg-orange-50 hover:bg-orange-100 focus:ring-4 focus:outline-none rounded-lg py-2.5" id="navbarOrder">
-                    <Link href="/menu">Order Now</Link>
-                </div>
+                <Link href="/menu" className="hidden navBarMenu lg:block lg:text-xl hover:text-black shadow-md bg-orange-50 hover:bg-orange-100 focus:ring-2 focus:outline-none rounded-lg py-2.5" id="navbarOrder">
+                    <span>Order Now</span>
+                </Link>
                 {!isLoggedIn && (
                     <>
                         <div className="hidden navBarMenu lg:block lg:text-xl hover:text-stone-950" id="navbarLogin">

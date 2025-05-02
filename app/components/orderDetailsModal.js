@@ -28,7 +28,7 @@ function renderAddIns(item) {
                 return (
                     <div key={addInKey} className="flex justify-between">
                         <span>• {addInName}{amountText ? `, ${amountText}` : ''}</span>
-                        <span>+ $ {addInPrice.toFixed(2)}</span>
+                        <span className="min-w-[50px] text-right">+ $ {addInPrice.toFixed(2)}</span>
                     </div>
                 );
             })}
@@ -41,10 +41,8 @@ export default function OrderDetailsModal({ order, onClose }) {
     const { addItemToCart } = useCart();
     const { prepareCartItem } = useItemCalculations();
 
-    // State to track loading status
     const [isReordering, setIsReordering] = useState(false);
 
-    // Function to add all items from a previous order to the cart
     const handleReorder = async (items) => {
         if (!items || items.length === 0) return;
 
@@ -110,22 +108,11 @@ export default function OrderDetailsModal({ order, onClose }) {
         });
     };
 
-    // Close modal when Escape key is pressed
     useEffect(() => {
-        const handleEsc = (event) => {
-            if (event.key === 'Escape') {
-                onClose();
-            }
-        };
-        window.addEventListener('keydown', handleEsc);
-
         // Prevent scrolling of the body when modal is open
         document.body.style.overflow = 'hidden';
 
-        return () => {
-            window.removeEventListener('keydown', handleEsc);
-            document.body.style.overflow = 'auto';
-        };
+        
     }, [onClose]);
 
     const handleOutsideClick = (e) => {
@@ -212,7 +199,7 @@ export default function OrderDetailsModal({ order, onClose }) {
                                                 {item.size} {item.type} {item.name}
                                                 {item.quantity > 1 && <span className="text-sm text-neutral-600 ml-1">(x{item.quantity})</span>}
                                             </span>
-                                            <span>$ {(item.totalPrice || (item.price * (item.quantity || 1))).toFixed(2)}</span>
+                                            <span className="min-w-[50px] text-right">$ {(item.totalPrice || (item.price * (item.quantity || 1))).toFixed(2)}</span>
                                         </div>
                                         {renderAddIns(item)}
                                     </div>

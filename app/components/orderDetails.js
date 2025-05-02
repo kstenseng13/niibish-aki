@@ -8,7 +8,7 @@ function renderAddIns(item) {
     }
 
     return (
-        <div className="ml-4 text-sm">
+        <div className="md:ml-4 text-sm">
             {item.addIns.map((addIn, index) => {
                 let amountText = '';
                 if (typeof addIn === 'object') {
@@ -26,7 +26,7 @@ function renderAddIns(item) {
                 return (
                     <div key={addInKey} className="flex justify-between">
                         <span>• {addInName}{amountText ? `, ${amountText}` : ''}</span>
-                        <span>+ $ {parseFloat(addInPrice).toFixed(2)}</span>
+                        <span className="min-w-[50px] text-right">+ $ {parseFloat(addInPrice).toFixed(2)}</span>
                     </div>
                 );
             })}
@@ -41,30 +41,30 @@ export default function OrderDetails({ items, subtotal, tax, tipAmount, tipPerce
         <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-xl font-semibold mb-4">Order Details</h2>
             <h4 className="mb-4">Pickup Details</h4>
-            <div className='mb-4 ml-4'>
+            <div className='mb-4 md:ml-4'>
                 <span>Ready At:</span>
                 <p className="bg-orange-400/30 border border-orange-800/40 rounded p-0.5">22 3rd Street S. Grand Forks, ND 58201</p>
             </div>
-            <div className='mb-4 ml-4'>
+            <div className='mb-4 md:ml-4'>
                 <span>For:</span>
                 <p className="bg-orange-400/30 border border-orange-800/40 rounded p-0.5">Pickup - {pickupTime}{isToday ? ' (Today)' : ''}</p>
             </div>
             <div className="mb-4">
                 <h4 className="my-4">Total</h4>
                 {items.map((item, index) => (
-                    <div key={`total-item-${item.cartItemId || index}`} className="mb-3 ml-4">
+                    <div key={`total-item-${item.cartItemId || index}`} className="mb-3 md:ml-4">
                         <div className="flex justify-between">
                             <span className="font-medium">
                                 {item.size} {item.type} {item.name}
                                 {item.quantity > 1 && <span className="text-sm text-neutral-600 ml-1">(x{item.quantity})</span>}
                             </span>
-                            <span>$ {(item.totalPrice || (item.price * item.quantity)).toFixed(2)}</span>
+                            <span className="min-w-[50px] text-right">$ {(item.totalPrice || (item.price * item.quantity)).toFixed(2)}</span>
                         </div>
                         {renderAddIns(item)}
                     </div>
                 ))}
             </div>
-            <div className="border-t border-neutral-300 pt-3 mb-2 ml-4">
+            <div className="border-t border-neutral-300 pt-3 mb-2 md:ml-4">
                 <div className="flex justify-between mb-2">
                     <span>Subtotal:</span>
                     <span>$ {subtotal.toFixed(2)}</span>
@@ -78,7 +78,7 @@ export default function OrderDetails({ items, subtotal, tax, tipAmount, tipPerce
                     <span>$ {parseFloat(tipAmount).toFixed(2)}</span>
                 </div>
             </div>
-            <div className="border-t border-neutral-300 my-3 pt-3 ml-4">
+            <div className="border-t border-neutral-300 my-3 pt-3 md:ml-4">
                 <div className="flex justify-between font-bold text-lg">
                     <span>Total:</span>
                     <span>$ {parseFloat(total).toFixed(2)}</span>
