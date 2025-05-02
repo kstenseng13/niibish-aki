@@ -37,10 +37,25 @@ export async function POST(req) {
             username: user.username
         }, JWT_SECRET, { expiresIn: "7d" });
 
+        const processedUser = {
+            ...user,
+            _id: user._id.toString(),
+            address: user.address || {
+                line1: '',
+                line2: '',
+                city: '',
+                state: '',
+                zipcode: ''
+            }
+        };
+
+        // Remove password from the user object
+        delete processedUser.password;
+
         await closeConnection();
         logger.info(`User logged in successfully: ${username}`);
 
-        return new Response(JSON.stringify({ message: "Login successful", token, user: user }), { status: 200 });
+        return new Response(JSON.stringify({ message: "Login successful", token, user: processedUser }), { status: 200 });
 
     } catch (error) {
         logger.error(`Login error: ${error.message}`);

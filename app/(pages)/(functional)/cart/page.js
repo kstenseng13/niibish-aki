@@ -47,7 +47,7 @@ export default function Cart() {
                 price: itemToEdit.price,
                 image: itemToEdit.imagePath.replace('/images/menu/', ''),
                 alt: itemToEdit.altText,
-                category: itemToEdit.category || (itemToEdit.addIns ? 2 : 4)
+                category: itemToEdit.category
             };
             setActiveItem(menuItem);
         } else {

@@ -152,11 +152,7 @@ export default function OrderDetailsModal({ order, onClose }) {
 
     const items = order.items?.map(item => ({
         ...item,
-        cartItemId: item.itemId || `item-${Math.random().toString(36).substring(2, 9)}`,
-        type: item.type || 'tea',
-        name: item.name || 'Tea',
-        size: item.size || 'Medium',
-        totalPrice: item.price * (item.quantity || 1)
+        cartItemId: item.itemId || `item-${Math.random().toString(36).substring(2, 9)}`
     })) || [];
 
     return (
@@ -165,56 +161,55 @@ export default function OrderDetailsModal({ order, onClose }) {
             className="modal-backdrop"
             onClick={handleOutsideClick}
         >
-                <div className="modal-content max-w-3xl" role="dialog" aria-modal="true">
-                    <div className="p-6">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-2xl font-semibold">Order Details</h2>
-                            <button
-                                onClick={onClose}
-                                className="text-neutral-500 hover:text-neutral-800 transition-colors"
-                                disabled={isReordering}
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
+            <div className="modal-content max-w-3xl" role="dialog" aria-modal="true">
+                <div className="p-6">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-2xl font-semibold">Order Details</h2>
+                        <button
+                            onClick={onClose}
+                            className="text-neutral-500 hover:text-neutral-800 transition-colors"
+                            disabled={isReordering}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    {isReordering && (
+                        <div className="mb-4">
+                            <div className="w-full bg-gray-200 rounded-full h-2.5">
+                                <div
+                                    className="bg-teal h-2.5 rounded-full transition-all duration-300 ease-in-out"
+                                    style={{ width: `${progress}%` }}
+                                ></div>
+                            </div>
+                            <div className="flex items-center justify-center mt-2">
+                                <LoadingSpinner size={16} className="mr-2" />
+                                <p className="text-sm text-gray-600">Adding items to cart...</p>
+                            </div>
                         </div>
+                    )}
 
-                        {isReordering && (
-                            <div className="mb-4">
-                                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                                    <div
-                                        className="bg-teal h-2.5 rounded-full transition-all duration-300 ease-in-out"
-                                        style={{ width: `${progress}%` }}
-                                    ></div>
-                                </div>
-                                <div className="flex items-center justify-center mt-2">
-                                    <LoadingSpinner size={16} className="mr-2" />
-                                    <p className="text-sm text-gray-600">Adding items to cart...</p>
-                                </div>
-                            </div>
-                        )}
-
-                        {notification && (
-                            <div className={`mb-4 p-3 rounded-md ${
-                                notification.type === 'error'
-                                    ? 'bg-red-100 text-red-800 border border-red-300'
-                                    : 'bg-green-100 text-green-800 border border-green-300'
+                    {notification && (
+                        <div className={`mb-4 p-3 rounded-md ${notification.type === 'error'
+                                ? 'bg-red-100 text-red-800 border border-red-300'
+                                : 'bg-green-100 text-green-800 border border-green-300'
                             }`}>
-                                <div className="flex items-center">
-                                    {notification.type === 'error' ? (
-                                        <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                                        </svg>
-                                    ) : (
-                                        <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                        </svg>
-                                    )}
-                                    <span>{notification.message}</span>
-                                </div>
+                            <div className="flex items-center">
+                                {notification.type === 'error' ? (
+                                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                    </svg>
+                                ) : (
+                                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                )}
+                                <span>{notification.message}</span>
                             </div>
-                        )}
+                        </div>
+                    )}
 
                     <div className="mb-6">
                         <div className="flex flex-wrap gap-4 mb-4">
@@ -254,10 +249,22 @@ export default function OrderDetailsModal({ order, onClose }) {
                                     >
                                         <div className="flex justify-between">
                                             <span className="font-medium">
-                                                {item.size} {item.type} {item.name}
+                                                {item.category !== 4 ? (
+                                                    <>
+                                                        {item.size} {item.type} {item.name}
+                                                    </>
+                                                ) : (
+                                                    <>{item.name}</>
+                                                )}
                                                 {item.quantity > 1 && <span className="text-sm text-neutral-600 ml-1">(x{item.quantity})</span>}
                                             </span>
-                                            <span className="min-w-[50px] text-right">$ {(item.totalPrice || (item.price * (item.quantity || 1))).toFixed(2)}</span>
+                                            <div className="text-right">
+                                                <div>$ {typeof item.basePrice === 'object' && item.basePrice.$numberDecimal ?
+                                                    parseFloat(item.basePrice.$numberDecimal).toFixed(2) :
+                                                    parseFloat(item.price * item.quantity).toFixed(2)}
+                                                </div>
+                                            </div>
+                                            
                                         </div>
                                         {renderAddIns(item)}
                                     </div>

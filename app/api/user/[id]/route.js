@@ -74,8 +74,23 @@ export async function GET(req) {
             return new Response(JSON.stringify({ message: "User not found" }), { status: 404 });
         }
 
-        const { password, ...userWithoutPassword } = user;
-        return new Response(JSON.stringify(userWithoutPassword), { status: 200 });
+        // Process user object to ensure consistent format
+        const processedUser = {
+            ...user,
+            _id: user._id.toString(), // Convert ObjectId to string
+            address: user.address || {
+                line1: '',
+                line2: '',
+                city: '',
+                state: '',
+                zipcode: ''
+            }
+        };
+
+        // Remove password from the user object
+        delete processedUser.password;
+
+        return new Response(JSON.stringify(processedUser), { status: 200 });
     } catch (error) {
         logger.error(`Error fetching user: ${error.message}`);
         return new Response(JSON.stringify({ message: "Something went wrong!" }), { status: 500 });
@@ -227,7 +242,21 @@ async function updateUserAndRespond(collection, userId, updateFields) {
 
     const updatedUser = await collection.findOne({ _id: userId });
     if (updatedUser) {
-        delete updatedUser.password;
+        // Process user object to ensure consistent format
+        const processedUser = {
+            ...updatedUser,
+            _id: updatedUser._id.toString(),
+            address: updatedUser.address || {
+                line1: '',
+                line2: '',
+                city: '',
+                state: '',
+                zipcode: ''
+            }
+        };
+
+        // Remove password from the user object
+        delete processedUser.password;
     }
 
     return new Response(JSON.stringify({ message: "Update successful", user: updatedUser }), { status: 200 });

@@ -67,7 +67,7 @@ export default function Menu() {
 
     return (
         <div className="container mx-auto p-4">
-            <ProductModal item={activeItem} onClose={() => setActiveItem(null)} />
+            {activeItem && <ProductModal item={activeItem} onClose={() => setActiveItem(null)} />}
 
             <div className="flex flex-wrap items-center justify-between mb-4">
                 <div className="float-right">

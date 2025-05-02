@@ -55,10 +55,20 @@ export default function OrderDetails({ items, subtotal, tax, tipAmount, tipPerce
                     <div key={`total-item-${item.cartItemId || index}`} className="mb-3 md:ml-4">
                         <div className="flex justify-between">
                             <span className="font-medium">
-                                {item.size} {item.type} {item.name}
+                                {item.category !== 4 ? (
+                                    <>
+                                        {item.size} {item.type} {item.name}
+                                    </>
+                                ) : (
+                                    <>{item.name}</>
+                                )}
                                 {item.quantity > 1 && <span className="text-sm text-neutral-600 ml-1">(x{item.quantity})</span>}
                             </span>
-                            <span className="min-w-[50px] text-right">$ {(item.totalPrice || (item.price * item.quantity)).toFixed(2)}</span>
+                            <div className="text-right">
+                                <div>$ {
+                                    parseFloat(item.price * item.quantity).toFixed(2)}
+                                </div>
+                            </div>
                         </div>
                         {renderAddIns(item)}
                     </div>

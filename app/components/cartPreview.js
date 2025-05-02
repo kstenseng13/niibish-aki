@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 
 export default function CartPreview() {
-    const { formattedItems, total } = useCart();
+    const { formattedItems, subtotal } = useCart();
 
     const itemsWithImages = formattedItems.map(item => ({
         ...item,
@@ -52,7 +52,7 @@ export default function CartPreview() {
                         <div className="mt-3 pt-3 border-t border-neutral-200">
                             <div className="flex justify-between mb-2">
                                 <span className="text-sm font-medium">Total</span>
-                                <span className="text-sm font-bold">${total}</span>
+                                <span className="text-sm font-bold">${subtotal}</span>
                             </div>
 
                             <Link href="/cart" className="block w-full actionButton transition">

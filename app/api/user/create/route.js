@@ -51,6 +51,21 @@ export async function POST(req) {
 
         const newUser = await collection.findOne({ _id: response.insertedId });
 
+        const processedUser = {
+            ...newUser,
+            _id: response.insertedId.toString(),
+            address: newUser.address || {
+                line1: '',
+                line2: '',
+                city: '',
+                state: '',
+                zipcode: ''
+            }
+        };
+
+        // Remove password from the user object
+        delete processedUser.password;
+
         await closeConnection();
         logger.info("MongoDB connection closed.");
 
@@ -61,7 +76,7 @@ export async function POST(req) {
         }, JWT_SECRET, { expiresIn: "7d" });
 
         logger.info(`User registered successfully: ${newUser.username}`);
-        return new Response(JSON.stringify({ message: "User created successfully", token, user: newUser }), { status: 201 });
+        return new Response(JSON.stringify({ message: "User created successfully", token, user: processedUser }), { status: 201 });
 
     } catch (error) {
         logger.error(`Error in user creation: ${error.message}`);

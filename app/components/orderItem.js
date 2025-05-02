@@ -1,11 +1,23 @@
 import { useState, useEffect } from 'react';
 import { useCart } from '../context/cartContext';
 import Image from 'next/image';
+import { useItemCalculations } from '@/hooks/useItemCalculations';
 
 export default function OrderItem({ orderItem }) {
     const [isRemoving, setIsRemoving] = useState(false);
     const [quantity, setQuantity] = useState(orderItem.quantity || 1);
     const { productImages, removeItemFromCart, updateItemQuantity, cartItems, setItemForEdit } = useCart();
+    const { calculateSizeUpcharge } = useItemCalculations();
+
+    // Calculate the price with size upcharge
+    const getPriceWithSizeUpcharge = () => {
+        if (orderItem.category === 4) {
+            return orderItem.price || 0;
+        }
+
+        const sizeUpcharge = calculateSizeUpcharge(orderItem.size);
+        return orderItem.price + sizeUpcharge;
+    };
 
     useEffect(() => {
         const currentItem = cartItems.find(item => item.cartItemId === orderItem.cartItemId);
@@ -17,14 +29,12 @@ export default function OrderItem({ orderItem }) {
     const updateQuantity = (newQuantity) => {
         const validQuantity = Math.max(1, newQuantity);
         setQuantity(validQuantity);
-
         updateItemQuantity(orderItem.cartItemId, validQuantity);
     };
 
     const handleRemoveItem = async () => {
         if (isRemoving) return;
         setIsRemoving(true);
-
         try {
             await removeItemFromCart(orderItem.cartItemId);
         } catch (error) {
@@ -40,19 +50,14 @@ export default function OrderItem({ orderItem }) {
 
     const renderAddInItem = (addIn, index) => {
         const addInName = typeof addIn === 'object' ? addIn.name : addIn;
-        const addInPrice = typeof addIn === 'object' ? addIn.price : (orderItem.extraCharges?.[index] || 0);
+        const addInPrice = typeof addIn === 'object' ? addIn.price : 0;
 
         let amountText = '';
         if (typeof addIn === 'object' && addIn.amount !== undefined) {
-            if (addIn.amount === 0.5) {
-                amountText = ', Easy';
-            } else if (addIn.amount === 1) {
-                amountText = ', Regular';
-            } else if (addIn.amount === 1.5) {
-                amountText = ', Extra';
-            } else if (addIn.amount) {
-                amountText = `, ${addIn.amount}`;
-            }
+            if (addIn.amount === 0.5) amountText = ', Easy';
+            else if (addIn.amount === 1) amountText = ', Regular';
+            else if (addIn.amount === 1.5) amountText = ', Extra';
+            else amountText = `, ${addIn.amount}`;
         }
 
         return (
@@ -75,14 +80,16 @@ export default function OrderItem({ orderItem }) {
                 <div className="flex flex-nowrap">
                     <div className="grow">
                         <span className="text-lg xl:text-2xl font-semibold">
-                            {orderItem.type ? `${orderItem.type} ${orderItem.name}` : orderItem.name}
+                            {orderItem.category !== 4 && orderItem.type ? `${orderItem.type} ${orderItem.name}` : orderItem.name}
                         </span>
                     </div>
                     <div className="grow pt-1 flex justify-end gap-2">
-                        <button type="button" className="hover:cursor-pointer" onClick={handleEditItem}>
-                            <Image src="/edit.svg" alt="Edit item" width={20} height={20} className="w-3 h-3 lg:w-4 lg:h-4" />
-                            <span className="sr-only">Edit item</span>
-                        </button>
+                        {parseInt(orderItem.category, 10) !== 4 && (
+                            <button type="button" className="hover:cursor-pointer" onClick={handleEditItem}>
+                                <Image src="/edit.svg" alt="Edit item" width={20} height={20} className="w-3 h-3 lg:w-4 lg:h-4" />
+                                <span className="sr-only">Edit item</span>
+                            </button>
+                        )}
                         <button type="button" className="hover:cursor-pointer" onClick={handleRemoveItem} disabled={isRemoving}>
                             <Image src="/x.svg" alt="Delete item" width={20} height={20} className="w-3 h-3 lg:w-4 lg:h-4" />
                             <span className="sr-only">Delete item</span>
@@ -90,25 +97,23 @@ export default function OrderItem({ orderItem }) {
                     </div>
                 </div>
                 <div className="flex justify-between">
-                    <p className="font-medium">{orderItem.size ? `${orderItem.size}` : ""}</p>
-                    <p>$ {(orderItem.price || 0).toFixed(2)}</p>
+                    <p className="font-medium">{orderItem.category !== 4 && orderItem.size ? `${orderItem.size}` : ""}</p>
+                    <p>$ {parseFloat(orderItem.price).toFixed(2)}</p>
                 </div>
 
-                {orderItem.addIns && orderItem.addIns.length > 0 ? (
+                {orderItem.addIns?.length > 0 && (
                     <div className="mt-2">
                         <p className="font-medium">Add-ins:</p>
                         {orderItem.addIns.map(renderAddInItem)}
                     </div>
-                ) : ( null )}
+                )}
 
                 <div className="mt-auto pt-2 border-t border-neutral-300 flex justify-between items-center">
                     <div className="flex items-center gap-2">
                         <div className="flex items-center gap-2 w-1/2">
                             <button onClick={() => updateQuantity(quantity - 1)}
                                 className="w-6 h-6 p-2 flex items-center justify-center rounded-full border border-neutral-300 text-xl hover:cursor-pointer">−</button>
-                            <input type="number" value={quantity} onChange={(e) => updateQuantity(Number(e.target.value))}
-                                min={1} className="w-12 text-center p-1 border rounded"
-                            />
+                            <input type="number" value={quantity} onChange={(e) => updateQuantity(Number(e.target.value))} min={1} className="w-12 text-center p-1 border rounded" />
                             <button onClick={() => updateQuantity(quantity + 1)}
                                 className="w-6 h-6 p-2 flex items-center justify-center rounded-full border border-neutral-300 text-xl hover:cursor-pointer">+</button>
                         </div>
