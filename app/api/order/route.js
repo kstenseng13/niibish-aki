@@ -70,7 +70,6 @@ export async function POST(req) {
                     total: 0
                 },
                 customerInfo: orderData.customerInfo || {},
-                address: orderData.customerInfo?.address || {},
                 tipPercentage: parseFloat(orderData.tipPercentage) || 0,
                 status: 'complete',
                 createdAt: new Date()
