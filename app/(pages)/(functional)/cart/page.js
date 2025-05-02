@@ -10,6 +10,7 @@ import ProductModal from "@/components/productModal";
 import CustomerInformation from "@/components/customerInformation";
 import TipSelection from "@/components/tipSelection";
 import OrderDetails from "@/components/orderDetails";
+import LoadingSpinner from "@/components/loadingSpinner";
 
 export default function Cart() {
     const router = useRouter();
@@ -165,7 +166,10 @@ export default function Cart() {
                             <h2>Order Summary</h2>
                             <div id="orderSummaryItemsSection" aria-live="polite">
                                 {isLoading || isCheckingOut ? (
-                                    <p>{isCheckingOut ? 'Processing your order...' : 'Loading cart items...'}</p>
+                                    <div className="flex items-center justify-center p-4">
+                                        <LoadingSpinner size={24} className="mr-3" />
+                                        <p>{isCheckingOut ? 'Processing your order...' : 'Loading cart items...'}</p>
+                                    </div>
                                 ) : itemsWithImages.length > 0 ? (
                                     itemsWithImages.map((item, index) => (
                                         <OrderItem key={`item-${item.cartItemId || index}`} orderItem={item} />
@@ -190,7 +194,7 @@ export default function Cart() {
                                 <div className="bg-white p-6 rounded-lg shadow-md mb-6 m-12 text-center">
                                     <p className="mb-4">Loading your profile information...</p>
                                     <div className="flex justify-center">
-                                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal"></div>
+                                        <LoadingSpinner size={32} />
                                     </div>
                                 </div>
                             ) : (
@@ -224,8 +228,17 @@ export default function Cart() {
                                     </div>
                                 )}
 
-                                <button className="w-full mt-4 actionButton transition" onClick={handleCheckout}
-                                    disabled={isCheckingOut}> {isCheckingOut ? 'Processing...' : 'Complete Order'}
+                                <button
+                                    className="w-full mt-4 actionButton transition flex items-center justify-center"
+                                    onClick={handleCheckout}
+                                    disabled={isCheckingOut}
+                                >
+                                    {isCheckingOut ? (
+                                        <>
+                                            <LoadingSpinner size={16} className="mr-2" />
+                                            Processing...
+                                        </>
+                                    ) : 'Complete Order'}
                                 </button>
                             </div>
                             {!isCheckingOut && (
@@ -239,10 +252,10 @@ export default function Cart() {
                     {/* Processing Section */}
                     {checkoutStep === 3 && (
                         <div className="bg-white p-6 rounded-lg shadow-md mb-6 m-12 text-center">
-                            <h2 className="text-xl font-semibold mb-4">Processing Your Order</h2>
+                            <h2 className="text-xl font-semibold mb-4">Completing Your Order</h2>
                             <p className="mb-4">Please wait while we process your order...</p>
                             <div className="flex justify-center">
-                                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal"></div>
+                                <LoadingSpinner size={48} />
                             </div>
                         </div>
                     )}

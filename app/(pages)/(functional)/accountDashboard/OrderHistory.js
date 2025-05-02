@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/cartContext';
 import { useItemCalculations } from '@/hooks/useItemCalculations';
 import OrderDetailsModal from '@/components/orderDetailsModal';
+import LoadingSpinner from '@/components/loadingSpinner';
 
 export default function OrderHistory() {
     const { user, token } = useUser();
@@ -95,10 +96,20 @@ export default function OrderHistory() {
     };
 
     const [reorderingId, setReorderingId] = useState(null);
+    const [notification, setNotification] = useState(null);
+
+    useEffect(() => {
+        if (notification) {
+            const timer = setTimeout(() => {
+                setNotification(null);
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [notification]);
 
     const handleReorder = async (order) => {
         if (!order.items || order.items.length === 0) {
-            alert('No items to reorder');
+            setNotification({ type: 'error', message: 'No items to reorder' });
             return;
         }
 
@@ -106,47 +117,63 @@ export default function OrderHistory() {
         let successCount = 0;
 
         try {
-            // Process items one by one
-            for (const item of order.items) {
-                if (!item.itemId) {
-                    console.warn('Item missing itemId, skipping', item);
-                    continue;
-                }
+            const itemsWithIds = order.items.filter(item => item.itemId);
 
+            if (itemsWithIds.length === 0) {
+                setNotification({ type: 'error', message: 'No valid items to reorder' });
+                setReorderingId(null);
+                return;
+            }
+
+            const fetchPromises = itemsWithIds.map(item =>
+                fetch(`/api/menu/${item.itemId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Failed to fetch menu item ${item.itemId}`);
+                        }
+                        return response.json();
+                    })
+                    .then(menuItem => ({ menuItem, originalItem: item }))
+                    .catch(error => {
+                        console.error(error);
+                        return null;
+                    })
+            );
+
+            const results = await Promise.all(fetchPromises);
+            const validResults = results.filter(result => result !== null);
+
+            for (const { menuItem, originalItem } of validResults) {
                 try {
-                    // Fetch current menu item data
-                    const response = await fetch(`/api/menu/${item.itemId}`);
-
-                    if (!response.ok) {
-                        console.warn(`Failed to fetch menu item ${item.itemId}`, await response.text());
-                        continue;
-                    }
-
-                    const menuItem = await response.json();
                     const customizations = {
-                        quantity: item.quantity || 1,
-                        type: item.type,
-                        size: item.size,
-                        addIns: item.addIns
+                        quantity: originalItem.quantity || 1,
+                        type: originalItem.type,
+                        size: originalItem.size,
+                        addIns: originalItem.addIns
                     };
 
-                    // Use the hook to prepare the cart item with all calculations
                     const newCartItem = prepareCartItem(menuItem, customizations);
                     await addItemToCart(newCartItem);
                     successCount++;
                 } catch (error) {
-                    console.error(`Error processing item ${item.itemId}:`, error);
+                    console.error(`Error processing item ${originalItem.itemId}:`, error);
                 }
             }
 
             if (successCount > 0) {
-                alert(`${successCount} item(s) added to cart!`);
+                router.push('/cart');
             } else {
-                alert('Failed to add items to cart. Please try again.');
+                setNotification({
+                    type: 'error',
+                    message: 'Failed to add items to cart. Please try again.'
+                });
             }
         } catch (error) {
             console.error('Error reordering items:', error);
-            alert('An error occurred while adding items to cart.');
+            setNotification({
+                type: 'error',
+                message: 'An error occurred while adding items to cart.'
+            });
         } finally {
             setReorderingId(null);
         }
@@ -157,7 +184,7 @@ export default function OrderHistory() {
             <div className="p-4">
                 <h4 className="text-2xl font-semibold mb-6">Order History</h4>
                 <div className="flex justify-center items-center h-64">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal"></div>
+                    <LoadingSpinner size={48} />
                 </div>
             </div>
         );
@@ -195,7 +222,18 @@ export default function OrderHistory() {
         <div className="p-4">
             <h4 className="text-2xl font-semibold mb-6">Order History</h4>
 
-            <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
+            {notification && notification.type === 'error' && (
+                <div className="mb-4 p-3 rounded-md bg-red-100 text-red-800 border border-red-300">
+                    <div className="flex items-center">
+                        <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                        <span>{notification.message}</span>
+                    </div>
+                </div>
+            )}
+
+            <div className="overflow-x-auto shadow-md sm:rounded-lg">
                 <table className="w-full text-sm text-left text-neutral-700">
                     <thead className="text-xs uppercase bg-teal text-white">
                         <tr>
@@ -233,6 +271,18 @@ export default function OrderHistory() {
                                         className="font-medium text-teal hover:text-tealDark hover:underline"
                                     >
                                         View Details
+                                    </button>
+                                    <button
+                                        onClick={() => handleReorder(order)}
+                                        disabled={reorderingId === order._id}
+                                        className="font-medium text-teal hover:text-tealDark hover:underline disabled:text-gray-400 disabled:hover:no-underline flex items-center"
+                                    >
+                                        {reorderingId === order._id ? (
+                                            <>
+                                                <LoadingSpinner size={14} className="mr-1" />
+                                                Adding...
+                                            </>
+                                        ) : 'Reorder'}
                                     </button>
                                 </td>
                             </tr>
