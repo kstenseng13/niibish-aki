@@ -1,20 +1,11 @@
-import { MongoClient } from "mongodb";
-import { loadEnvConfig } from "@next/env";
 import logger from "@/lib/dnaLogger";
-
-loadEnvConfig(process.cwd());
-const uri = process.env.MONGODB_URI;
+import { connectToDatabase, closeConnection } from "@/lib/mongodb";
 
 export async function POST(req) {
     try {
         const requestBody = await req.json();
-
-        const client = new MongoClient(uri);
-        await client.connect();
-        logger.info("Connected to MongoDB.");
-
-        const database = client.db("niibish-aki");
-        const ordersCollection = database.collection("order");
+        const { db } = await connectToDatabase();
+        const ordersCollection = db.collection("order");
 
         if (requestBody.userId && requestBody.item) {
             const { userId, item } = requestBody;
@@ -35,7 +26,8 @@ export async function POST(req) {
                         $push: { items: item }
                     }
                 );
-                await client.close();
+                await closeConnection();
+
                 return new Response(JSON.stringify({ orderId: existingCart._id }), { status: 200 });
             }
 
@@ -53,7 +45,7 @@ export async function POST(req) {
             };
 
             const result = await ordersCollection.insertOne(newCart);
-            await client.close();
+            await closeConnection();
 
             return new Response(JSON.stringify({ orderId: result.insertedId }), { status: 201 });
         }
@@ -78,14 +70,13 @@ export async function POST(req) {
                     total: 0
                 },
                 customerInfo: orderData.customerInfo || {},
-                address: orderData.customerInfo?.address || {},
                 tipPercentage: parseFloat(orderData.tipPercentage) || 0,
                 status: 'complete',
                 createdAt: new Date()
             };
 
             const result = await ordersCollection.insertOne(orderDocument);
-            await client.close();
+            await closeConnection();
 
             return new Response(JSON.stringify({
                 message: "Order created successfully",
@@ -98,6 +89,12 @@ export async function POST(req) {
 
     } catch (error) {
         logger.error(`Error managing order: ${error.message}`);
+        try {
+            await closeConnection();
+        } catch (closeError) {
+            logger.error(`Error closing MongoDB connection: ${closeError.message}`);
+        }
+
         return new Response(JSON.stringify({ message: "Something went wrong!" }), {
             status: 500,
             headers: { "Content-Type": "application/json" }

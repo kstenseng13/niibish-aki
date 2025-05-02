@@ -58,8 +58,12 @@ export default function CustomerInformation({ onInfoSubmit }) {
             return;
         }
 
+        // Create a properly structured customer info object
         const formattedInfo = {
-            ...customerInfo,
+            firstName: customerInfo.firstName,
+            lastName: customerInfo.lastName,
+            email: customerInfo.email,
+            phone: customerInfo.phone,
             address: {
                 line1: customerInfo.address,
                 line2: customerInfo.addressLine2 || '',
@@ -73,7 +77,7 @@ export default function CustomerInformation({ onInfoSubmit }) {
     };
 
     return (
-        <div className="bg-white p-6 rounded-lg shadow-md m-12">
+        <div className="bg-white p-6 rounded-lg shadow-md my-6 md:m-12">
             <h2 className="text-xl font-semibold mb-4">Customer Information</h2>
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">

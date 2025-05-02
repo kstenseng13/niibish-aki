@@ -33,11 +33,12 @@ export function useItemCalculations() {
         // For drinks
         const basePrice = parseFloat(item.basePrice || item.price || 0);
         const sizeUpcharge = calculateSizeUpcharge(item.size);
+        const price = basePrice + sizeUpcharge;
         const addInsPrice = calculateAddInsPrice(item.addIns);
         const quantity = parseInt(item.quantity || 1);
 
-        const unitPrice = basePrice + sizeUpcharge + addInsPrice;
-        return unitPrice * quantity;
+        // Calculate total price as (price + addIns) * quantity
+        return (price + addInsPrice) * quantity;
     };
 
     const formatPrice = (price) => {
@@ -70,8 +71,15 @@ export function useItemCalculations() {
         } else { // Drink
             cartItem.type = customizations.type || 'Iced';
             cartItem.size = customizations.size || 'Small';
-            cartItem.price = itemPrice;
+
+            // Set basePrice to the original price from the database
             cartItem.basePrice = itemPrice;
+
+            // Calculate size upcharge
+            const sizeUpcharge = calculateSizeUpcharge(cartItem.size);
+
+            // Set price to basePrice + sizeUpcharge
+            cartItem.price = itemPrice + sizeUpcharge;
 
             if (customizations.addIns && customizations.addIns.length > 0) {
                 cartItem.addIns = customizations.addIns.map(addIn => ({
@@ -83,7 +91,10 @@ export function useItemCalculations() {
 
                 cartItem.addInsPrice = calculateAddInsPrice(cartItem.addIns);
             }
-            cartItem.totalPrice = calculateItemTotalPrice(cartItem);
+
+            // Calculate totalPrice (price + addIns) * quantity
+            const addInsPrice = cartItem.addInsPrice || 0;
+            cartItem.totalPrice = (cartItem.price + addInsPrice) * cartItem.quantity;
         }
 
         return cartItem;

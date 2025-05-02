@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useCart } from "../context/cartContext";
-import { useItemCalculations } from "@/hooks/useItemCalculations";
+
+const formatPrice = (price) => {
+    return typeof price === "object" && "$numberDecimal" in price
+        ? parseFloat(price.$numberDecimal)
+        : parseFloat(price);
+};
 
 export default function ProductModal({ item, onClose }) {
     const { addItemToCart, isLoading, itemToEdit, updateCartItem, setItemForEdit } = useCart();
-    const { calculateSizeUpcharge, calculateAddInsPrice, calculateItemTotalPrice, formatPrice, prepareCartItem } = useItemCalculations();
     const [type, setType] = useState(itemToEdit?.type || "Iced");
     const [size, setSize] = useState(itemToEdit?.size || "Small");
     const [quantity, setQuantity] = useState(itemToEdit?.quantity || 1);
@@ -16,6 +20,22 @@ export default function ProductModal({ item, onClose }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const isEditMode = !!itemToEdit;
     const isSnack = item?.category === 4;
+    const [menuItem, setMenuItem] = useState(item);
+
+    const handleQuantityChange = (e) => {
+        const value = Number(e.target.value);
+        if (value > 0) {
+            setQuantity(value);
+        } else {
+            setQuantity(1);
+        }
+    };
+
+    const validateQuantityOnBlur = (e) => {
+        if (Number(e.target.value) < 1) {
+            setQuantity(1);
+        }
+    };
 
     useEffect(() => {
         const fetchAddIns = async () => {
@@ -25,6 +45,7 @@ export default function ProductModal({ item, onClose }) {
                 const data = await res.json();
                 setAddIns(data);
 
+                // If we're in edit mode and have addins, set the selected addins
                 if (itemToEdit?.addIns && itemToEdit.addIns.length > 0) {
                     const selectedAddInsMap = {};
                     itemToEdit.addIns.forEach(addIn => {
@@ -48,9 +69,36 @@ export default function ProductModal({ item, onClose }) {
         fetchAddIns();
     }, [itemToEdit]);
 
-    if (!item) return null;
-    const basePrice = formatPrice(item.price);
-    const sizeUpcharge = calculateSizeUpcharge(size);
+    useEffect(() => {
+        const fetchBaseItem = async () => {
+            if (isEditMode && itemToEdit?.itemId) {
+                try {
+                    const res = await fetch(`/api/menu/${itemToEdit.itemId}`);
+                    if (!res.ok) throw new Error("Failed to fetch item.");
+                    const data = await res.json();
+                    setMenuItem(data);
+                } catch (err) {
+                    console.error("Error fetching base item:", err);
+                    setMenuItem(item);
+                }
+            }
+        };
+
+        fetchBaseItem();
+    }, [isEditMode, itemToEdit, item]);
+
+    useEffect(() => {
+        if (item && !isEditMode) {
+            setMenuItem(item);
+        }
+    }, [item, isEditMode]);
+
+
+    if (!menuItem) return null;
+
+    const basePrice = formatPrice(menuItem.price);
+    const sizeUpcharge = size === "Medium" ? 0.75 : size === "Large" ? 1.10 : size === "Extra Large" ? 1.50 : 0;
+
     const addInsArray = Object.entries(selectedAddIns)
         .map(([id, amount]) => {
             const addIn = addIns.find((a) => a._id === id);
@@ -58,22 +106,44 @@ export default function ProductModal({ item, onClose }) {
             const quantity = amount === "Easy" ? 0.5 : amount === "Regular" ? 1 : 1.5;
             return { _id: id, name: addIn.name, price: addIn.price, amount: quantity };
         }).filter(Boolean);
-    const totalAddInsPrice = calculateAddInsPrice(addInsArray);
 
-    const customizations = {
+    const totalAddInsPrice = addInsArray.reduce((total, addIn) => total + addIn.price * addIn.amount, 0);
+
+    // Calculate price (basePrice + sizeUpcharge)
+    const price = basePrice + sizeUpcharge;
+
+    // Calculate totalPrice based on category
+    const totalPrice = isSnack ? basePrice * quantity : (price + totalAddInsPrice) * quantity;
+
+    const baseOrderItem = {
+        itemId: menuItem._id,
+        name: menuItem.name,
+        category: menuItem.category,
+        imagePath: menuItem.image,
+        altText: menuItem.alt || menuItem.name,
         quantity,
-        type,
-        size,
-        addIns: addInsArray
+        totalPrice: parseFloat(totalPrice.toFixed(2)),
+        basePrice: basePrice
     };
-    const orderItem = prepareCartItem(item, customizations);
-    const totalPrice = calculateItemTotalPrice({
-        category: item.category,
-        basePrice,
-        size,
-        addIns: addInsArray,
-        quantity
-    });
+
+    const orderItem = isSnack
+        ? {
+            ...baseOrderItem,
+            price: parseFloat(basePrice.toFixed(2))
+        }
+        : {
+            ...baseOrderItem,
+            type,
+            size,
+            addIns: addInsArray.map(addIn => ({
+                id: addIn._id,
+                name: addIn.name,
+                amount: addIn.amount,
+                price: parseFloat((addIn.price * addIn.amount).toFixed(2))
+            })),
+            price: parseFloat(price.toFixed(2)),
+            addInsPrice: parseFloat(totalAddInsPrice.toFixed(2))
+        };
 
     const resetAndClose = () => {
         setType("Iced");
@@ -82,6 +152,8 @@ export default function ProductModal({ item, onClose }) {
         setSelectedAddIns({});
         setExpanded(false);
         setError("");
+
+        // Clear the item being edited if there is one
         if (itemToEdit) {
             setItemForEdit(null);
         }
@@ -90,47 +162,40 @@ export default function ProductModal({ item, onClose }) {
     };
 
     const handleAddToCart = async () => {
+        if (quantity <= 0) {
+            setError('Quantity must be at least 1');
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             let success;
 
             if (isEditMode && itemToEdit) {
-                // Check if anything has actually changed
+                // Check if anything has changed
                 const hasChanges =
                     type !== itemToEdit.type ||
                     size !== itemToEdit.size ||
                     quantity !== itemToEdit.quantity ||
-                    JSON.stringify(addInsArray.map(a => ({ id: a._id, amount: a.amount })).sort((a, b) => a.id.localeCompare(b.id))) !==
-                    JSON.stringify((itemToEdit.addIns || []).map(a => ({ id: a.id, amount: a.amount })).sort((a, b) => a.id.localeCompare(b.id)));
+                    JSON.stringify(addInsArray.map(a => ({ id: a._id, amount: a.amount })).sort()) !==
+                    JSON.stringify((itemToEdit.addIns || []).map(a => ({ id: a.id, amount: a.amount })).sort());
 
                 if (hasChanges) {
-                    const sizeChanged = size !== itemToEdit.size;
-                    const addInsChanged = JSON.stringify(addInsArray.map(a => ({ id: a._id, amount: a.amount })).sort((a, b) => a.id.localeCompare(b.id))) !==
-                        JSON.stringify((itemToEdit.addIns || []).map(a => ({ id: a.id, amount: a.amount })).sort((a, b) => a.id.localeCompare(b.id)));
+                    // Calculate the correct price based on changes
 
-                    let unitPrice = itemToEdit.price || 0;
-                    let newAddInsPrice = itemToEdit.addInsPrice || 0;
-
-                    // If size changed, adjust the price accordingly
-                    if (sizeChanged) {
-                        const oldSizeUpcharge = itemToEdit.size === "Medium" ? 0.75 :
-                            itemToEdit.size === "Large" ? 1.10 :
-                                itemToEdit.size === "Extra Large" ? 1.50 : 0;
-                        unitPrice = unitPrice - oldSizeUpcharge + sizeUpcharge;
-                    }
-
-                    if (addInsChanged) {
-                        newAddInsPrice = parseFloat(totalAddInsPrice.toFixed(2));
-                        unitPrice = unitPrice - (itemToEdit.addInsPrice || 0) + newAddInsPrice;
-                    }
-
-                    const newTotalPrice = unitPrice * quantity;
+                    // Calculate the correct base price without add-ins
+                    const originalBasePrice = basePrice;
+                    const newSizeUpcharge = size === "Medium" ? 0.75 : size === "Large" ? 1.10 : size === "Extra Large" ? 1.50 : 0;
+                    const unitPrice = originalBasePrice + newSizeUpcharge;
+                    const newAddInsPrice = parseFloat(totalAddInsPrice.toFixed(2));
+                    const newTotalPrice = isSnack ? originalBasePrice * quantity : (unitPrice + newAddInsPrice) * quantity;
 
                     const updatedItem = {
                         ...itemToEdit,
                         type,
                         size,
                         quantity,
+                        basePrice: originalBasePrice,
                         addIns: addInsArray.map(addIn => ({
                             id: addIn._id,
                             name: addIn.name,
@@ -143,10 +208,15 @@ export default function ProductModal({ item, onClose }) {
                     };
                     success = await updateCartItem(updatedItem);
                 } else if (quantity !== itemToEdit.quantity) {
+                    // Calculate the new total price based on the item's category
+                    const newTotalPrice = itemToEdit.category === 4
+                        ? parseFloat((itemToEdit.basePrice * quantity).toFixed(2))
+                        : parseFloat(((itemToEdit.price + (itemToEdit.addInsPrice || 0)) * quantity).toFixed(2));
+
                     const updatedItem = {
                         ...itemToEdit,
                         quantity,
-                        totalPrice: parseFloat((itemToEdit.price * quantity).toFixed(2))
+                        totalPrice: newTotalPrice
                     };
                     success = await updateCartItem(updatedItem);
                 } else {
@@ -178,15 +248,31 @@ export default function ProductModal({ item, onClose }) {
 
     return (
         <div className="modal-backdrop" onClick={resetAndClose}>
-            <div className="modal-content p-2 pt-4 md:p-4 md:pt-8" onClick={(e) => e.stopPropagation()} aria-modal="true" role="dialog">
+            <div className="modal-content p-2 pt-4 md:p-4 md:pt-8" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+                <button
+                    className="absolute top-2 right-2 text-neutral-500 hover:text-neutral-800"
+                    onClick={resetAndClose}
+                    aria-label="Close modal"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
                 <div className="flex flex-col h-full">
                     <div className="relative h-[250px] md:h-[300px] mx-4 md:mx-28 mt-2 mb-6 rounded overflow-hidden">
-                        <Image src={`/images/menu/${item.image}`} alt={item.alt || item.name} fill style={{ objectFit: "cover" }} className="rounded" />
+                        <Image
+                            src={`/images/menu/${menuItem.image}`}
+                            alt={menuItem.alt || menuItem.name}
+                            fill
+                            style={{ objectFit: "cover" }}
+                            className="rounded"
+                        />
                     </div>
 
                     <div className="flex-1 overflow-y-auto px-2">
-                        <h4 className="text-xl font-bold mb-1">{item.name}</h4>
-                        <p className="text-sm mb-4">{item.description}</p>
+                        <h4 className="text-xl font-bold mb-1">{menuItem.name}</h4>
+                        <p className="text-sm mb-4">{menuItem.description}</p>
 
                         {!isSnack && (
                             <div className="mb-4">
@@ -258,7 +344,14 @@ export default function ProductModal({ item, onClose }) {
                             <div className="flex items-center gap-2 w-1/3 md:w-1/4">
                                 <button onClick={() => setQuantity(q => Math.max(1, q - 1))}
                                     className="w-6 h-6 p-2 flex items-center justify-center rounded-full border border-neutral-300 text-xl hover:cursor-pointer">−</button>
-                                <input type="number" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} min={1} className="w-16 text-center p-2 border rounded" />
+                                <input
+                                    type="number"
+                                    value={quantity}
+                                    onChange={handleQuantityChange}
+                                    min={1}
+                                    onBlur={validateQuantityOnBlur}
+                                    className="w-16 text-center p-2 border rounded"
+                                />
                                 <button onClick={() => setQuantity(q => q + 1)}
                                     className="w-6 h-6 p-2 flex items-center justify-center rounded-full border border-neutral-300 text-xl hover:cursor-pointer">+</button>
                             </div>

@@ -1,12 +1,10 @@
-import { MongoClient, ObjectId } from "mongodb";
+
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { loadEnvConfig } from "@next/env";
 import logger from "@/lib/dnaLogger";
 import { sanitizeInput } from "@/lib/sanitize";
-loadEnvConfig(process.cwd());
+import { connectToDatabase, closeConnection, createObjectId, isValidObjectId } from "@/lib/mongodb";
 
-const uri = process.env.MONGODB_URI;
 const JWT_SECRET = process.env.JWT_SECRET;
 
 async function verifyToken(req) {
@@ -19,8 +17,13 @@ async function verifyToken(req) {
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        if (typeof decoded.userId === 'string') {
-            decoded.userId = ObjectId.createFromHexString(decoded.userId);
+        if (typeof decoded.userId === 'string' && isValidObjectId(decoded.userId)) {
+            try {
+                decoded.userId = createObjectId(decoded.userId);
+            } catch (error) {
+                logger.error(`Failed to create ObjectId: ${error.message}`);
+                throw new Error("Invalid user ID format");
+            }
         }
         return decoded;
     } catch (error) {
@@ -48,20 +51,21 @@ export async function GET(req) {
 
         let userId = userData.userId || userData._id;
         if (typeof userId === 'string') {
+            if (!isValidObjectId(userId)) {
+                logger.error(`Invalid ObjectId format: ${userId}`);
+                return new Response(JSON.stringify({ message: "Invalid user ID format" }), { status: 400 });
+            }
             try {
-                userId = new ObjectId(userId);
+                userId = createObjectId(userId);
                 logger.info(`Converted string ID to ObjectId: ${userId}`);
             } catch (error) {
-                logger.error(`Failed to convert ID to ObjectId: ${error.message}`);
+                logger.error(`Failed to create ObjectId: ${error.message}`);
                 return new Response(JSON.stringify({ message: "Invalid user ID format" }), { status: 400 });
             }
         }
 
-        const client = new MongoClient(uri);
-        await client.connect();
-        logger.info("Connected to MongoDB.");
-        const database = client.db("niibish-aki");
-        const collection = database.collection("users");
+        const { db } = await connectToDatabase();
+        const collection = db.collection("users");
 
         logger.info(`Looking for user with ID: ${userId}`);
         const user = await collection.findOne({ _id: userId });
@@ -70,8 +74,23 @@ export async function GET(req) {
             return new Response(JSON.stringify({ message: "User not found" }), { status: 404 });
         }
 
-        const { password, ...userWithoutPassword } = user;
-        return new Response(JSON.stringify(userWithoutPassword), { status: 200 });
+        // Process user object to ensure consistent format
+        const processedUser = {
+            ...user,
+            _id: user._id.toString(), // Convert ObjectId to string
+            address: user.address || {
+                line1: '',
+                line2: '',
+                city: '',
+                state: '',
+                zipcode: ''
+            }
+        };
+
+        // Remove password from the user object
+        delete processedUser.password;
+
+        return new Response(JSON.stringify(processedUser), { status: 200 });
     } catch (error) {
         logger.error(`Error fetching user: ${error.message}`);
         return new Response(JSON.stringify({ message: "Something went wrong!" }), { status: 500 });
@@ -87,13 +106,10 @@ async function handleUserUpdate(req) {
         return new Response(JSON.stringify({ message: "User data is required!" }), { status: 400 });
     }
 
-    const client = new MongoClient(uri);
-    await client.connect();
-    logger.info("Connected to MongoDB.");
-    
+    const { db } = await connectToDatabase();
+
     try {
-        const database = client.db("niibish-aki");
-        const collection = database.collection("users");
+        const collection = db.collection("users");
 
         const existingUser = await collection.findOne({ _id: tokenPayload.userId });
         if (!existingUser) {
@@ -102,15 +118,22 @@ async function handleUserUpdate(req) {
         }
 
         const updateResult = await processUserUpdate(collection, existingUser, userInput, tokenPayload.userId);
+        await closeConnection();
+
         return updateResult;
-    } finally {
-        await client.close();
+    } catch (error) {
+        try {
+            await closeConnection();
+        } catch (closeError) {
+            logger.error(`Error closing MongoDB connection: ${closeError.message}`);
+        }
+        throw error;
     }
 }
 
 async function processUserUpdate(collection, existingUser, userInput, userId) {
     const updateFields = buildUpdateFields(userInput);
-    
+
     if (Object.keys(updateFields).length === 0) {
         return new Response(JSON.stringify({ message: "No valid fields provided for update." }), { status: 400 });
     }
@@ -137,13 +160,13 @@ async function processUserUpdate(collection, existingUser, userInput, userId) {
 
 function buildUpdateFields(userInput) {
     const updateFields = {};
-    
+
     // Process basic fields
     const basicFields = ['firstName', 'lastName', 'username', 'email', 'phoneNumber'];
     basicFields.forEach(field => {
         if (userInput[field] && userInput[field].trim() !== "") {
-            updateFields[field] = field === 'username' 
-                ? sanitizeInput(userInput[field]).toLowerCase() 
+            updateFields[field] = field === 'username'
+                ? sanitizeInput(userInput[field]).toLowerCase()
                 : sanitizeInput(userInput[field]);
         }
     });
@@ -152,7 +175,7 @@ function buildUpdateFields(userInput) {
     if (userInput.address && typeof userInput.address === 'object') {
         const sanitizedAddress = {};
         const addressFields = ['line1', 'line2', 'city', 'state', 'zipcode'];
-        
+
         addressFields.forEach(field => {
             if (userInput.address[field]) {
                 sanitizedAddress[field] = sanitizeInput(userInput.address[field]);
@@ -163,7 +186,7 @@ function buildUpdateFields(userInput) {
             updateFields.address = sanitizedAddress;
         }
     }
-    
+
     return updateFields;
 }
 
@@ -174,12 +197,12 @@ async function handlePasswordUpdate(newPassword, currentPasswordHash) {
         return {
             error: true,
             response: new Response(
-                JSON.stringify({ message: "New password cannot be the same as the current password." }), 
+                JSON.stringify({ message: "New password cannot be the same as the current password." }),
                 { status: 400 }
             )
         };
     }
-    
+
     return {
         error: false,
         hashedPassword: await bcrypt.hash(newPassword, 10)
@@ -191,18 +214,18 @@ async function checkUsernameUniqueness(collection, username, userId) {
         username: username,
         _id: { $ne: userId }
     });
-    
+
     if (duplicateUser) {
         logger.warn("Username is already taken.");
         return {
             error: true,
             response: new Response(
-                JSON.stringify({ message: "Username is already taken." }), 
+                JSON.stringify({ message: "Username is already taken." }),
                 { status: 400 }
             )
         };
     }
-    
+
     return { error: false };
 }
 
@@ -219,7 +242,21 @@ async function updateUserAndRespond(collection, userId, updateFields) {
 
     const updatedUser = await collection.findOne({ _id: userId });
     if (updatedUser) {
-        delete updatedUser.password;
+        // Process user object to ensure consistent format
+        const processedUser = {
+            ...updatedUser,
+            _id: updatedUser._id.toString(),
+            address: updatedUser.address || {
+                line1: '',
+                line2: '',
+                city: '',
+                state: '',
+                zipcode: ''
+            }
+        };
+
+        // Remove password from the user object
+        delete processedUser.password;
     }
 
     return new Response(JSON.stringify({ message: "Update successful", user: updatedUser }), { status: 200 });

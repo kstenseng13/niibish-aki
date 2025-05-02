@@ -599,8 +599,6 @@ components:
               type: string
             address:
               $ref: '#/components/schemas/Address'
-        address:
-          $ref: '#/components/schemas/Address'
         isGuest:
           type: boolean
         tipPercentage:

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../context/userContext';
 import { useRouter } from 'next/navigation';
+import { validateUsername, validatePassword } from '@/_utils/formValidation';
 
 
 export default function Login() {
@@ -19,20 +20,14 @@ export default function Login() {
     }, [isLoggedIn]);
 
     const validateForm = () => {
-        // Check all required fields
         if (!formData.username || !formData.password) {
             return 'All fields are required.';
         }
+        const usernameError = validateUsername(formData.username);
+        if (usernameError) return usernameError;
 
-        // Validate username length
-        if (formData.username.length < 5 || formData.username.length > 15) {
-            return 'Username must be between 5 and 15 characters.';
-        }
-
-        // Validate password length
-        if (formData.password.length < 8 || formData.password.length > 16) {
-            return 'Password must be between 8 and 16 characters.';
-        }
+        const passwordError = validatePassword(formData.password);
+        if (passwordError) return passwordError;
 
         return '';
     };

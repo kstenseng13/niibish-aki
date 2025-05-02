@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/userContext';
 import { useRouter } from 'next/navigation';
+import { validateUsername, validatePassword, validateEmail, validatePhoneNumber } from '@/_utils/formValidation';
 
 export default function RegisterForm() {
     const [formData, setFormData] = useState({
@@ -19,27 +20,21 @@ export default function RegisterForm() {
     const { login } = useAuth();
 
     const validateForm = () => {
-        const usernameRegex = /^\S+$/; // No spaces in username
-
-        if (!formData.firstName || !formData.lastName || !formData.username || !formData.email || !formData.password || !formData.repeatPassword) {
+        if (!formData.firstName || !formData.lastName) {
             return 'All fields are required.';
         }
 
-        if (formData.username.length < 5 || formData.username.length > 15) {
-            return 'Username must be between 5 and 15 characters.';
-        }
+        const usernameError = validateUsername(formData.username);
+        if (usernameError) return usernameError;
 
-        if (formData.password.length < 8 || formData.password.length > 16) {
-            return 'Password must be between 8 and 16 characters.';
-        }
+        const emailError = validateEmail(formData.email);
+        if (emailError) return emailError;
 
-        if (!usernameRegex.test(formData.username)) {
-            return 'Username cannot contain spaces.';
-        }
+        const phoneError = validatePhoneNumber(formData.phoneNumber);
+        if (phoneError) return phoneError;
 
-        if (formData.password !== formData.repeatPassword) {
-            return 'Passwords do not match.';
-        }
+        const passwordError = validatePassword(formData.password, formData.repeatPassword);
+        if (passwordError) return passwordError;
 
         if (!formData.terms) {
             return 'You must agree to the terms and conditions.';
@@ -65,8 +60,6 @@ export default function RegisterForm() {
             setError('');
 
             try {
-
-                //create new user object that does not include repeat password to send to server
                 let newUserData = {
                     firstName: formData.firstName,
                     lastName: formData.lastName,
@@ -95,8 +88,6 @@ export default function RegisterForm() {
                 }
 
                 const { user, token } = await response.json();
-
-                // Update user data
                 const userData = {
                     firstName: user.firstName,
                     lastName: user.lastName,
@@ -106,7 +97,6 @@ export default function RegisterForm() {
                     _id: user._id
                 };
 
-                // Log user in
                 login(userData, token);
 
                 // Reset form if needed
