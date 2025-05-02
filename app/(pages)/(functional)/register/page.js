@@ -8,7 +8,7 @@ export default function Register() {
                     <div className="my-auto flex flex-col justify-center px-6 sm:px-24 md:justify-start md:px-8 md:pt-0 lg:px-12">
                         <div className="text-center text-3xl font-bold md:leading-tight md:text-left md:text-5xl pb-12">
                             <p>Welcome to</p>
-                            <p><span className="text-amber-600">Leaf Rewards</span></p>
+                            <p><span className="matcha-label">Leaf Rewards</span></p>
                         </div>
                         <RegisterForm />
                         <div className="pt-8 pb-8 text-center">

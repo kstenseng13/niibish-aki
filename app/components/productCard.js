@@ -1,19 +1,34 @@
 import Image from "next/image";
+import { memo, useMemo } from "react";
 
-export default function ProductCard({ item, onClick }) {
-    const price =
-        typeof item.price === "object" && "$numberDecimal" in item.price
+function ProductCard({ item, onClick }) {
+    const price = useMemo(() => {
+        return typeof item.price === "object" && "$numberDecimal" in item.price
             ? parseFloat(item.price.$numberDecimal)
             : item.price;
+    }, [item.price]);
+
+    const handleClick = () => {
+        if (onClick) {
+            onClick(item);
+        }
+    };
 
     return (
-        <div className="bg-whiteSmoke productCard m-1 md:m-4 max-w-[12rem] md:max-w-[16rem] cursor-pointer" id="product"
-            onClick={() => onClick?.(item)} role="button">
+        <div
+            className="bg-whiteSmoke productCard m-1 md:m-4 max-w-[12rem] md:max-w-[16rem] cursor-pointer"
+            id="product"
+            onClick={handleClick}
+            role="button"
+            aria-label={`View details for ${item.name}`}
+        >
             <div className="relative h-[12rem] md:h-[18rem] rounded-t-lg overflow-hidden">
                 <Image
                     src={`/images/menu/${item.image}`}
                     alt={item.alt || item.name}
                     fill
+                    loading="lazy"
+                    sizes="(max-width: 768px) 12rem, 16rem"
                     className="productCardImage"
                 />
             </div>
@@ -28,3 +43,5 @@ export default function ProductCard({ item, onClick }) {
         </div>
     );
 }
+
+export default memo(ProductCard);

@@ -3,6 +3,7 @@ import "./styles.css";
 import Navbar from './components/navbar';
 import Footer from './components/footer';
 import { UserProvider } from "./context/userContext";
+import { CartProvider } from './context/cartContext';
 
 export const metadata = {
   title: "Niibish Aki",
@@ -32,10 +33,12 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className="bg-[linear-gradient(to_bottom,rgba(255,245,235,0.95),rgba(255,245,235,0.90)),url('https://img.freepik.com/free-vector/hand-drawn-floral-outline-background_23-2150611130.jpg')]">
       <UserProvider>
-        <Navbar />
-        {children}
-        <Footer />
-        </UserProvider>
+        <CartProvider>
+          <Navbar />
+          {children}
+          <Footer />
+        </CartProvider>
+      </UserProvider>
       </body>
     </html>
   );

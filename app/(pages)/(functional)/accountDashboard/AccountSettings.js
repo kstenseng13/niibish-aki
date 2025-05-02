@@ -1,9 +1,10 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/userContext';
+import { validateUsername, validatePassword, validateEmail, validatePhoneNumber } from '@/_utils/formValidation';
 
 export default function AccountSettings() {
-    const { user, token } = useAuth();
+    const { user, token, setUser } = useAuth();
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -13,12 +14,14 @@ export default function AccountSettings() {
         password: '',
         repeatPassword: ''
     });
+    const [originalData, setOriginalData] = useState({});
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         if (user) {
-            setFormData({
+            const initialData = {
                 firstName: user.firstName || '',
                 lastName: user.lastName || '',
                 username: user.username || '',
@@ -26,24 +29,32 @@ export default function AccountSettings() {
                 phoneNumber: user.phoneNumber || '',
                 password: '',
                 repeatPassword: ''
-            });
+            };
+            setFormData(initialData);
+            setOriginalData(initialData);
         }
     }, [user]);
 
     const validateForm = () => {
-        const usernameRegex = /^\S+$/;
+        // Only validate fields that have values
+        if (formData.username) {
+            const usernameError = validateUsername(formData.username);
+            if (usernameError) return usernameError;
+        }
 
-        if (formData.username && (!usernameRegex.test(formData.username) || formData.username.length < 5 || formData.username.length > 15)) {
-            return 'Username must be 5–15 characters and contain no spaces.';
+        if (formData.email) {
+            const emailError = validateEmail(formData.email);
+            if (emailError) return emailError;
+        }
+
+        if (formData.phoneNumber) {
+            const phoneError = validatePhoneNumber(formData.phoneNumber);
+            if (phoneError) return phoneError;
         }
 
         if (formData.password || formData.repeatPassword) {
-            if (formData.password.length < 8 || formData.password.length > 16) {
-                return 'Password must be between 8 and 16 characters.';
-            }
-            if (formData.password !== formData.repeatPassword) {
-                return 'Passwords do not match.';
-            }
+            const passwordError = validatePassword(formData.password, formData.repeatPassword, true);
+            if (passwordError) return passwordError;
         }
 
         return '';
@@ -53,27 +64,37 @@ export default function AccountSettings() {
         e.preventDefault();
         setError('');
         setSuccess(false);
+        setIsSubmitting(true);
 
         const validationError = validateForm();
         if (validationError) {
             setError(validationError);
+            setIsSubmitting(false);
             return;
         }
 
-        // Updated object should only have non-empty fields
+        // Only include fields that have changed and are not empty
         const updatedUserData = {};
         Object.entries(formData).forEach(([key, value]) => {
-            if (value && key !== 'repeatPassword') {
+            if (value && key !== 'repeatPassword' && value !== originalData[key]) {
                 updatedUserData[key] = value;
             }
         });
 
         if (Object.keys(updatedUserData).length === 0) {
-            setError("Please fill in at least one field to update.");
+            setError("No changes detected. Please modify at least one field to update.");
+            setIsSubmitting(false);
             return;
         }
 
         try {
+            // Make sure user and user._id exist
+            if (!user?._id) {
+                setError("User information is missing. Please try logging in again.");
+                setIsSubmitting(false);
+                return;
+            }
+
             const response = await fetch(`/api/user/${user._id}`, {
                 method: 'PUT',
                 headers: {
@@ -87,13 +108,33 @@ export default function AccountSettings() {
 
             if (!response.ok) {
                 setError(data.message || 'Update failed.');
+                setIsSubmitting(false);
                 return;
+            }
+
+            if (data.user) {
+                setUser(data.user);
+
+                setOriginalData({
+                    ...originalData,
+                    ...updatedUserData,
+                    password: '',
+                    repeatPassword: ''
+                });
+
+                setFormData(prev => ({
+                    ...prev,
+                    password: '',
+                    repeatPassword: ''
+                }));
             }
 
             setSuccess(true);
         } catch (error) {
             console.error('Error submitting form:', error);
             setError('Something went wrong while updating your account.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -103,6 +144,16 @@ export default function AccountSettings() {
             ...prevData,
             [name]: value,
         }));
+
+        if (success) {
+            setSuccess(false);
+        }
+    };
+
+    const handleReset = () => {
+        setFormData(originalData);
+        setError('');
+        setSuccess(false);
     };
 
     return (
@@ -221,26 +272,19 @@ export default function AccountSettings() {
                 </div>
             </div>
 
-            <div className="float-right">
-                <button
-                    type="submit"
-                    id="save"
-                    name="save"
-                    className="text-white shadow-md bg-amber-600 hover:bg-amber-700 focus:ring-4 focus:outline-none focus:ring-amber-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-4">
-                    Save
-                </button>
-                {/* <button
-                    type="button"
-                    id="delete"
-                    name="delete"
-                    className="text-white shadow-md bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
-                    Delete
-                </button> */}
-                <div className=' text-right'>
-                    {error && <div className="ml-3 mt-3 text-red-500 inline-block">{error}</div>}
-                    {success && <div className="ml-3 mt-3 text-green-600 inline-block">Changes saved!</div>}
+            <div className="flex justify-end items-center mt-6 mx-6">
+                <div className="ml-4">
+                    {error && <div className="text-red-500">{error}</div>}
+                    {success && <div className="text-green-600">Changes saved successfully!</div>}
                 </div>
-
+                <button type="button" onClick={handleReset}
+                    className="text-neutral-700 bg-neutral-200 hover:bg-neutral-300 focus:ring-4 focus:outline-none focus:ring-neutral-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-4"
+                    disabled={isSubmitting} > Reset
+                </button>
+                <button type="submit" id="save"  name="save"
+                    className="actionButton"  disabled={isSubmitting}>
+                    {isSubmitting ? 'Saving...' : 'Save'}
+                </button>
             </div>
         </form>
     );

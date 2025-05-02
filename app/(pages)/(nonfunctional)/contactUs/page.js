@@ -19,7 +19,7 @@ export default function ContactUs() {
                     </p>
                     <p className="py-4">
                         <span className="font-semibold">Email:</span> 
-                        <a href="mailto:hello@niibish-aki.com" className="text-teal-600 hover:underline">hello@niibish-aki.com</a>
+                        <a href="mailto:hello@niibish-aki.com" className="text-teal-700 hover:underline">hello@niibish-aki.com</a>
                     </p>
                     <p className="py-4">
                         <span className="font-semibold">Address:</span>

@@ -1,12 +1,9 @@
-import { MongoClient } from "mongodb";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { loadEnvConfig } from "@next/env";
 import logger from "@/lib/dnaLogger.js";
 import { sanitizeInput } from "@/lib/sanitize";
-loadEnvConfig(process.cwd());
+import { connectToDatabase, closeConnection } from "@/lib/mongodb";
 
-const uri = process.env.MONGODB_URI;
 const JWT_SECRET = process.env.JWT_SECRET;
 
 export async function POST(req) {
@@ -22,25 +19,19 @@ export async function POST(req) {
         user = {
             firstName: sanitizeInput(user.firstName),
             lastName: sanitizeInput(user.lastName),
-            username: sanitizeInput(user.username),
+            username: sanitizeInput(user.username).toLowerCase(),
             email: sanitizeInput(user.email),
             phoneNumber: sanitizeInput(user.phoneNumber),
             password: user.password
         };
 
-        const client = new MongoClient(uri);
-        await client.connect();
-        logger.info("Connected to MongoDB.");
-
-        const database = client.db("niibish-aki");
-        const collection = database.collection("users");
-
-        // Check if user already exists
+        const { db } = await connectToDatabase();
+        const collection = db.collection("users");
         const existingUser = await collection.findOne({ username: user.username });
 
         if (existingUser) {
             logger.warn(`Username already exists: ${user.username}`);
-            await client.close();
+            await closeConnection();
             return new Response(JSON.stringify({ message: "Username already exists!" }), { status: 409 });
         }
 
@@ -54,23 +45,47 @@ export async function POST(req) {
 
         if (!response.acknowledged) {
             logger.error("Failed to save user.");
-            await client.close();
+            await closeConnection();
             return new Response(JSON.stringify({ message: "User not saved!" }), { status: 500 });
         }
 
         const newUser = await collection.findOne({ _id: response.insertedId });
 
-        await client.close();
+        const processedUser = {
+            ...newUser,
+            _id: response.insertedId.toString(),
+            address: newUser.address || {
+                line1: '',
+                line2: '',
+                city: '',
+                state: '',
+                zipcode: ''
+            }
+        };
+
+        // Remove password from the user object
+        delete processedUser.password;
+
+        await closeConnection();
         logger.info("MongoDB connection closed.");
 
         /// Generate JWT Token for new user
-        const token = jwt.sign({ userId: response.insertedId, username: newUser.username }, JWT_SECRET, { expiresIn: "7d" });
+        const token = jwt.sign({
+            userId: response.insertedId,
+            username: newUser.username
+        }, JWT_SECRET, { expiresIn: "7d" });
 
         logger.info(`User registered successfully: ${newUser.username}`);
-        return new Response(JSON.stringify({ message: "User created successfully", token, user: newUser }), { status: 201 });
+        return new Response(JSON.stringify({ message: "User created successfully", token, user: processedUser }), { status: 201 });
 
     } catch (error) {
         logger.error(`Error in user creation: ${error.message}`);
+        try {
+            await closeConnection();
+        } catch (closeError) {
+            logger.error(`Error closing MongoDB connection: ${closeError.message}`);
+        }
+
         return new Response(JSON.stringify({ message: "Something went wrong!" }), { status: 500 });
     }
 }
