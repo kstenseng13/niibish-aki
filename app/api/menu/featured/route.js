@@ -1,5 +1,5 @@
 import logger from "@/lib/dnaLogger";
-import { connectToDatabase } from "@/lib/mongodb";
+import { connectToDatabase, closeConnection } from "@/lib/mongodb";
 
 export async function GET() {
     try {
@@ -9,14 +9,24 @@ export async function GET() {
         const menuCollection = db.collection("menu");
         const featuredItems = await menuCollection.find({ category: 0 }).toArray();
 
+        await closeConnection();
+
         return new Response(JSON.stringify(featuredItems), {
             status: 200,
             headers: {
                 "Content-Type": "application/json",
+                "Cache-Control": "public, max-age=3600", // Cache for 1 hour
             },
         });
     } catch (error) {
         logger.error(`Error fetching featured menu items: ${error.message}`);
+
+        try {
+            await closeConnection();
+        } catch (closeError) {
+            logger.error(`Error closing MongoDB connection: ${closeError.message}`);
+        }
+
         return new Response(JSON.stringify({ message: "Something went wrong!" }), { status: 500 });
     }
 }

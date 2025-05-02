@@ -20,7 +20,9 @@ export default function ProductModal({ item, onClose }) {
     useEffect(() => {
         const fetchAddIns = async () => {
             try {
-                const res = await fetch("/api/menu/add-ins");
+                const res = await fetch("/api/menu/add-ins", {
+                    cache: 'force-cache', // Use NextJS cache for this request
+                });
                 if (!res.ok) throw new Error("Failed to fetch add-ins.");
                 const data = await res.json();
                 setAddIns(data);
@@ -44,7 +46,6 @@ export default function ProductModal({ item, onClose }) {
                 setError("Unable to load add-ins.");
             }
         };
-
         fetchAddIns();
     }, [itemToEdit]);
 
@@ -89,85 +90,125 @@ export default function ProductModal({ item, onClose }) {
         onClose();
     };
 
+    const haveAddInsChanged = (currentAddIns, originalAddIns) => {
+        const currentSerialized = JSON.stringify(
+            currentAddIns.map(a => ({ id: a._id, amount: a.amount })).sort((a, b) => a.id.localeCompare(b.id))
+        );
+        const originalSerialized = JSON.stringify(
+            (originalAddIns || []).map(a => ({ id: a.id, amount: a.amount })).sort((a, b) => a.id.localeCompare(b.id))
+        );
+        return currentSerialized !== originalSerialized;
+    };
+
+    const calculateSizeAdjustment = (oldSize, oldPrice, newUpcharge) => {
+        const oldSizeUpcharge =
+            oldSize === "Medium" ? 0.75 :
+            oldSize === "Large" ? 1.10 :
+            oldSize === "Extra Large" ? 1.50 : 0;
+
+        return oldPrice - oldSizeUpcharge + newUpcharge;
+    };
+
+    const prepareUpdatedItem = (original, newAddInsPrice, adjustedPrice) => {
+        return {
+            ...original,
+            type,
+            size,
+            quantity,
+            addIns: addInsArray.map(addIn => ({
+                id: addIn._id,
+                name: addIn.name,
+                amount: addIn.amount,
+                price: parseFloat((addIn.price * addIn.amount).toFixed(2))
+            })),
+            price: parseFloat(adjustedPrice.toFixed(2)),
+            addInsPrice: newAddInsPrice,
+            totalPrice: parseFloat((adjustedPrice * quantity).toFixed(2))
+        };
+    };
+
+    const handleAddNewItem = async () => {
+        try {
+            const success = await addItemToCart(orderItem);
+            if (success) {
+                resetAndClose();
+            } else {
+                setError('Failed to add item to order. Please try again.');
+            }
+        } catch (error) {
+            setError('Failed to add item to order. Please try again.');
+            console.error('Error adding to order:', error);
+        }
+    };
+
+    const handleQuantityUpdate = async () => {
+        try {
+            const updatedItem = {
+                ...itemToEdit,
+                quantity,
+                totalPrice: parseFloat((itemToEdit.price * quantity).toFixed(2))
+            };
+            const success = await updateCartItem(updatedItem);
+            if (success) {
+                resetAndClose();
+            } else {
+                setError('Failed to update item. Please try again.');
+            }
+        } catch (error) {
+            setError('Failed to update item. Please try again.');
+            console.error('Error updating item quantity:', error);
+        }
+    };
+
+    const handleComplexUpdate = async (sizeChanged, addInsChanged) => {
+        try {
+            let unitPrice = itemToEdit.price || 0;
+            let newAddInsPrice = itemToEdit.addInsPrice || 0;
+            if (sizeChanged) {
+                unitPrice = calculateSizeAdjustment(itemToEdit.size, unitPrice, sizeUpcharge);
+            }
+            if (addInsChanged) {
+                newAddInsPrice = parseFloat(totalAddInsPrice.toFixed(2));
+                unitPrice = unitPrice - (itemToEdit.addInsPrice || 0) + newAddInsPrice;
+            }
+            const updatedItem = prepareUpdatedItem(itemToEdit, newAddInsPrice, unitPrice);
+            const success = await updateCartItem(updatedItem);
+
+            if (success) {
+                resetAndClose();
+            } else {
+                setError('Failed to update item. Please try again.');
+            }
+        } catch (error) {
+            setError('Failed to update item. Please try again.');
+            console.error('Error updating item:', error);
+        }
+    };
+
     const handleAddToCart = async () => {
         setIsSubmitting(true);
         try {
-            let success;
-
-            if (isEditMode && itemToEdit) {
-                // Check if anything has actually changed
-                const hasChanges =
-                    type !== itemToEdit.type ||
-                    size !== itemToEdit.size ||
-                    quantity !== itemToEdit.quantity ||
-                    JSON.stringify(addInsArray.map(a => ({ id: a._id, amount: a.amount })).sort((a, b) => a.id.localeCompare(b.id))) !==
-                    JSON.stringify((itemToEdit.addIns || []).map(a => ({ id: a.id, amount: a.amount })).sort((a, b) => a.id.localeCompare(b.id)));
-
-                if (hasChanges) {
-                    const sizeChanged = size !== itemToEdit.size;
-                    const addInsChanged = JSON.stringify(addInsArray.map(a => ({ id: a._id, amount: a.amount })).sort((a, b) => a.id.localeCompare(b.id))) !==
-                        JSON.stringify((itemToEdit.addIns || []).map(a => ({ id: a.id, amount: a.amount })).sort((a, b) => a.id.localeCompare(b.id)));
-
-                    let unitPrice = itemToEdit.price || 0;
-                    let newAddInsPrice = itemToEdit.addInsPrice || 0;
-
-                    // If size changed, adjust the price accordingly
-                    if (sizeChanged) {
-                        const oldSizeUpcharge = itemToEdit.size === "Medium" ? 0.75 :
-                            itemToEdit.size === "Large" ? 1.10 :
-                                itemToEdit.size === "Extra Large" ? 1.50 : 0;
-                        unitPrice = unitPrice - oldSizeUpcharge + sizeUpcharge;
-                    }
-
-                    if (addInsChanged) {
-                        newAddInsPrice = parseFloat(totalAddInsPrice.toFixed(2));
-                        unitPrice = unitPrice - (itemToEdit.addInsPrice || 0) + newAddInsPrice;
-                    }
-
-                    const newTotalPrice = unitPrice * quantity;
-
-                    const updatedItem = {
-                        ...itemToEdit,
-                        type,
-                        size,
-                        quantity,
-                        addIns: addInsArray.map(addIn => ({
-                            id: addIn._id,
-                            name: addIn.name,
-                            amount: addIn.amount,
-                            price: parseFloat((addIn.price * addIn.amount).toFixed(2))
-                        })),
-                        price: parseFloat(unitPrice.toFixed(2)),
-                        addInsPrice: newAddInsPrice,
-                        totalPrice: parseFloat(newTotalPrice.toFixed(2))
-                    };
-                    success = await updateCartItem(updatedItem);
-                } else if (quantity !== itemToEdit.quantity) {
-                    const updatedItem = {
-                        ...itemToEdit,
-                        quantity,
-                        totalPrice: parseFloat((itemToEdit.price * quantity).toFixed(2))
-                    };
-                    success = await updateCartItem(updatedItem);
-                } else {
-                    resetAndClose();
-                    return;
-                }
-
-                if (success) {
-                    resetAndClose();
-                } else {
-                    setError('Failed to update item. Please try again.');
-                }
-            } else {
-                // Add a new ite
-                success = await addItemToCart(orderItem);
-                if (success) {
-                    resetAndClose();
-                } else {
-                    setError('Failed to add item to order. Please try again.');
-                }
+            if (!isEditMode || !itemToEdit) {
+                await handleAddNewItem();
+                return;
             }
+
+            const typeChanged = type !== itemToEdit.type;
+            const sizeChanged = size !== itemToEdit.size;
+            const quantityChanged = quantity !== itemToEdit.quantity;
+            const addInsChanged = haveAddInsChanged(addInsArray, itemToEdit.addIns);
+
+            if (!typeChanged && !sizeChanged && !quantityChanged && !addInsChanged) {
+                resetAndClose();
+                return;
+            }
+
+            if (!typeChanged && !sizeChanged && !addInsChanged && quantityChanged) {
+                await handleQuantityUpdate();
+                return;
+            }
+
+            await handleComplexUpdate(sizeChanged, addInsChanged);
         } catch (error) {
             setError(isEditMode ? 'Failed to update item. Please try again.' : 'Failed to add item to order. Please try again.');
             console.error(isEditMode ? 'Error updating item:' : 'Error adding to order:', error);
@@ -178,7 +219,17 @@ export default function ProductModal({ item, onClose }) {
 
     return (
         <div className="modal-backdrop" onClick={resetAndClose}>
-            <div className="modal-content p-2 pt-4 md:p-4 md:pt-8" onClick={(e) => e.stopPropagation()} aria-modal="true" role="dialog">
+            <div className="modal-content p-2 pt-4 md:p-4 md:pt-8" aria-modal="true" role="dialog">
+                <button
+                    className="absolute top-2 right-2 text-neutral-500 hover:text-neutral-800"
+                    onClick={resetAndClose}
+                    aria-label="Close modal"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
                 <div className="flex flex-col h-full">
                     <div className="relative h-[250px] md:h-[300px] mx-4 md:mx-28 mt-2 mb-6 rounded overflow-hidden">
                         <Image src={`/images/menu/${item.image}`} alt={item.alt || item.name} fill style={{ objectFit: "cover" }} className="rounded" />

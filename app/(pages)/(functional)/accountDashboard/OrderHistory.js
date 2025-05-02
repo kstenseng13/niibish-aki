@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '../../../context/userContext';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/cartContext';
@@ -20,32 +20,35 @@ export default function OrderHistory() {
     const [error, setError] = useState(null);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [showModal, setShowModal] = useState(false);
+    const [reorderingId, setReorderingId] = useState(null);
+    const [notification, setNotification] = useState(null);
 
     useEffect(() => {
         const fetchOrders = async () => {
-            if (!user?._id || !token) return;
+            if (!user?._id || !token) {
+                setIsLoading(false);
+                return;
+            }
 
             try {
                 setIsLoading(true);
                 setError(null);
 
                 const response = await fetch(`/api/order/user/${user._id}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
 
+                if (response.status === 404) {
+                    setOrders([]);
+                    return;
+                }
+
                 if (!response.ok) {
-                    if (response.status === 404) {
-                        // No orders is an empty state, not an error
-                        setOrders([]);
-                        return;
-                    }
                     throw new Error(`Error fetching orders: ${response.statusText}`);
                 }
 
                 const data = await response.json();
-                setOrders(data);
+                setOrders(Array.isArray(data) ? data : []);
             } catch (err) {
                 console.error('Failed to fetch orders:', err);
                 setError('Failed to load your order history. Please try again later.');
@@ -57,7 +60,14 @@ export default function OrderHistory() {
         fetchOrders();
     }, [user, token]);
 
-    const formatDate = (dateString) => {
+    useEffect(() => {
+        if (!notification) return;
+
+        const timer = setTimeout(() => setNotification(null), 3000);
+        return () => clearTimeout(timer);
+    }, [notification]);
+
+    const formatDate = useCallback((dateString) => {
         const date = new Date(dateString);
         return date.toLocaleDateString('en-US', {
             year: 'numeric',
@@ -66,82 +76,68 @@ export default function OrderHistory() {
             hour: '2-digit',
             minute: '2-digit'
         });
-    };
+    }, []);
 
-    const getOrderTotal = (order) => {
+    const getOrderTotal = useCallback((order) => {
         if (!order.bill) return '$0.00';
         const total = parseFloat(order.bill.total) ||
             (parseFloat(order.bill.subtotal || 0) +
                 parseFloat(order.bill.tax || 0) +
                 parseFloat(order.bill.tip || 0));
         return `$${total.toFixed(2)}`;
-    };
+    }, []);
 
-    const getItemCount = (order) => {
+    const getItemCount = useCallback((order) => {
         if (!order.items || !Array.isArray(order.items)) return 0;
 
         return order.items.reduce((total, item) => {
             return total + (parseInt(item.quantity) || 1);
         }, 0);
-    };
+    }, []);
 
-    const viewOrderDetails = (order) => {
+    const viewOrderDetails = useCallback((order) => {
         setSelectedOrder(order);
         setShowModal(true);
-    };
+    }, []);
 
-    const closeModal = () => {
+    const closeModal = useCallback(() => {
         setShowModal(false);
         setTimeout(() => setSelectedOrder(null), 300);
-    };
+    }, []);
 
-    const [reorderingId, setReorderingId] = useState(null);
-    const [notification, setNotification] = useState(null);
-
-    useEffect(() => {
-        if (notification) {
-            const timer = setTimeout(() => {
-                setNotification(null);
-            }, 3000);
-            return () => clearTimeout(timer);
-        }
-    }, [notification]);
-
-    const handleReorder = async (order) => {
-        if (!order.items || order.items.length === 0) {
+    const handleReorder = useCallback(async (order) => {
+        if (!order.items?.length) {
             setNotification({ type: 'error', message: 'No items to reorder' });
             return;
         }
 
         setReorderingId(order._id);
-        let successCount = 0;
 
         try {
             const itemsWithIds = order.items.filter(item => item.itemId);
 
-            if (itemsWithIds.length === 0) {
+            if (!itemsWithIds.length) {
                 setNotification({ type: 'error', message: 'No valid items to reorder' });
                 setReorderingId(null);
                 return;
             }
 
-            const fetchPromises = itemsWithIds.map(item =>
-                fetch(`/api/menu/${item.itemId}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`Failed to fetch menu item ${item.itemId}`);
-                        }
-                        return response.json();
-                    })
-                    .then(menuItem => ({ menuItem, originalItem: item }))
-                    .catch(error => {
-                        console.error(error);
-                        return null;
-                    })
-            );
+            const results = await Promise.all(
+                itemsWithIds.map(async (item) => {
+                    try {
+                        const response = await fetch(`/api/menu/${item.itemId}`);
+                        if (!response.ok) return null;
 
-            const results = await Promise.all(fetchPromises);
-            const validResults = results.filter(result => result !== null);
+                        const menuItem = await response.json();
+                        return { menuItem, originalItem: item };
+                    } catch (error) {
+                        console.error(`Error fetching item ${item.itemId}:`, error);
+                        return null;
+                    }
+                })
+            );
+            const validResults = results.filter(Boolean);
+            let successCount = 0;
 
             for (const { menuItem, originalItem } of validResults) {
                 try {
@@ -152,14 +148,12 @@ export default function OrderHistory() {
                         addIns: originalItem.addIns
                     };
 
-                    const newCartItem = prepareCartItem(menuItem, customizations);
-                    await addItemToCart(newCartItem);
+                    await addItemToCart(prepareCartItem(menuItem, customizations));
                     successCount++;
                 } catch (error) {
-                    console.error(`Error processing item ${originalItem.itemId}:`, error);
+                    console.error(`Error adding item ${originalItem.itemId} to cart:`, error);
                 }
             }
-
             if (successCount > 0) {
                 router.push('/cart');
             } else {
@@ -177,7 +171,7 @@ export default function OrderHistory() {
         } finally {
             setReorderingId(null);
         }
-    };
+    }, [addItemToCart, prepareCartItem, router]);
 
     if (isLoading) {
         return (
@@ -189,7 +183,6 @@ export default function OrderHistory() {
             </div>
         );
     }
-
     if (error) {
         return (
             <div className="p-4">
@@ -200,7 +193,6 @@ export default function OrderHistory() {
             </div>
         );
     }
-
     if (orders.length === 0) {
         return (
             <div className="p-4">
@@ -218,11 +210,54 @@ export default function OrderHistory() {
         );
     }
 
+    const orderRows = orders.map((order, index) => (
+        <tr key={order._id} className={`border-b border-neutral-200 ${index % 2 === 0 ? 'bg-white' : 'bg-neutral-50'} hover:bg-neutral-100`}>
+            <td className="px-6 py-4">
+                {formatDate(order.createdAt)}
+            </td>
+            <th scope="row" className="px-6 py-4 font-medium text-neutral-900 whitespace-nowrap">
+                {order._id.toString().substring(0, 8)}...
+            </th>
+            <td className="px-6 py-4">
+                {getItemCount(order)} items
+            </td>
+            <td className="px-6 py-4 font-medium">
+                {getOrderTotal(order)}
+            </td>
+            <td className="px-6 py-4">
+                <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                    {order.status || 'Complete'}
+                </span>
+            </td>
+            <td className="px-6 py-4 flex space-x-4">
+                <button
+                    onClick={() => viewOrderDetails(order)}
+                    className="font-medium text-teal hover:text-tealDark hover:underline"
+                >
+                    View Details
+                </button>
+                <button
+                    onClick={() => handleReorder(order)}
+                    disabled={reorderingId === order._id}
+                    className="font-medium text-teal hover:text-tealDark hover:underline disabled:text-gray-400 disabled:hover:no-underline flex items-center"
+                >
+                    {reorderingId === order._id ? (
+                        <>
+                            <LoadingSpinner size={14} className="mr-1" />
+                            Adding...
+                        </>
+                    ) : 'Reorder'}
+                </button>
+            </td>
+        </tr>
+    ));
+    
     return (
         <div className="p-4">
             <h4 className="text-2xl font-semibold mb-6">Order History</h4>
 
-            {notification && notification.type === 'error' && (
+            {/* Error notification */}
+            {notification?.type === 'error' && (
                 <div className="mb-4 p-3 rounded-md bg-red-100 text-red-800 border border-red-300">
                     <div className="flex items-center">
                         <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
@@ -233,6 +268,7 @@ export default function OrderHistory() {
                 </div>
             )}
 
+            {/* Orders table */}
             <div className="overflow-x-auto shadow-md sm:rounded-lg">
                 <table className="w-full text-sm text-left text-neutral-700">
                     <thead className="text-xs uppercase bg-teal text-white">
@@ -246,47 +282,7 @@ export default function OrderHistory() {
                         </tr>
                     </thead>
                     <tbody>
-                        {orders.map((order, index) => (
-                            <tr key={order._id} className={`border-b border-neutral-200 ${index % 2 === 0 ? 'bg-white' : 'bg-neutral-50'} hover:bg-neutral-100`}>
-                                <td className="px-6 py-4">
-                                    {formatDate(order.createdAt)}
-                                </td>
-                                <th scope="row" className="px-6 py-4 font-medium text-neutral-900 whitespace-nowrap">
-                                    {order._id.toString().substring(0, 8)}...
-                                </th>
-                                <td className="px-6 py-4">
-                                    {getItemCount(order)} items
-                                </td>
-                                <td className="px-6 py-4 font-medium">
-                                    {getOrderTotal(order)}
-                                </td>
-                                <td className="px-6 py-4">
-                                    <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                                        {order.status || 'Complete'}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 flex space-x-4">
-                                    <button
-                                        onClick={() => viewOrderDetails(order)}
-                                        className="font-medium text-teal hover:text-tealDark hover:underline"
-                                    >
-                                        View Details
-                                    </button>
-                                    <button
-                                        onClick={() => handleReorder(order)}
-                                        disabled={reorderingId === order._id}
-                                        className="font-medium text-teal hover:text-tealDark hover:underline disabled:text-gray-400 disabled:hover:no-underline flex items-center"
-                                    >
-                                        {reorderingId === order._id ? (
-                                            <>
-                                                <LoadingSpinner size={14} className="mr-1" />
-                                                Adding...
-                                            </>
-                                        ) : 'Reorder'}
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
+                        {orderRows}
                     </tbody>
                 </table>
             </div>
