@@ -1,7 +1,8 @@
 import logger from "@/lib/dnaLogger";
-import { connectToDatabase, createObjectId, isValidObjectId } from "@/lib/mongodb";
+import { connectToDatabase, closeConnection, createObjectId, isValidObjectId } from "@/lib/mongodb";
 
 export async function GET(_, { params }) {
+    let client;
     try {
         const resolvedParams = await params;
         const { itemId } = resolvedParams;
@@ -23,9 +24,15 @@ export async function GET(_, { params }) {
             return new Response(JSON.stringify({ message: "Invalid item ID format" }), { status: 400 });
         }
 
-        const { db } = await connectToDatabase();
+        // Get both client and db to ensure we can close the specific connection
+        const { client: dbClient, db } = await connectToDatabase();
+        client = dbClient;
+
         const menuCollection = db.collection("menu");
         const menuItem = await menuCollection.findOne({ _id: objectId });
+
+        // Close the connection when done with the database operations
+        await closeConnection(client);
 
         if (!menuItem) {
             logger.warn(`Menu item not found: ${itemId}`);
@@ -36,10 +43,21 @@ export async function GET(_, { params }) {
             status: 200,
             headers: {
                 "Content-Type": "application/json",
+                "Cache-Control": "public, max-age=3600", // Cache for 1 hour
             },
         });
     } catch (error) {
         logger.error(`Error fetching menu item: ${error.message}`);
+
+        // Make sure to close the connection even if there's an error
+        if (client) {
+            try {
+                await closeConnection(client);
+            } catch (closeError) {
+                logger.error(`Error closing MongoDB connection: ${closeError.message}`);
+            }
+        }
+
         return new Response(JSON.stringify({ message: "Something went wrong!" }), { status: 500 });
     }
 }

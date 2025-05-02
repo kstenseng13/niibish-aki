@@ -2,13 +2,15 @@ import logger from "@/lib/dnaLogger";
 import { connectToDatabase, closeConnection } from "@/lib/mongodb";
 
 export async function GET() {
+    let client;
     try {
         logger.info("GET request received for menu items");
-
-        const { db } = await connectToDatabase();
+        const { client: dbClient, db } = await connectToDatabase();
+        client = dbClient;
         const menuCollection = db.collection("menu");
         const menuItems = await menuCollection.find().toArray();
-        await closeConnection();
+
+        await closeConnection(client);
 
         return new Response(JSON.stringify(menuItems), {
             status: 200,
@@ -19,10 +21,13 @@ export async function GET() {
         });
     } catch (error) {
         logger.error(`Error fetching menu items: ${error.message}`);
-        try {
-            await closeConnection();
-        } catch (closeError) {
-            logger.error(`Error closing MongoDB connection: ${closeError.message}`);
+
+        if (client) {
+            try {
+                await closeConnection(client);
+            } catch (closeError) {
+                logger.error(`Error closing MongoDB connection: ${closeError.message}`);
+            }
         }
 
         return new Response(JSON.stringify({ message: "Something went wrong!" }), { status: 500 });
