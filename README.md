@@ -6,7 +6,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## 🚀 Deployments
 - **Pre-Production** [NiibishAkiStg on Heroku](https://niibish-aki-stg-8e0cc2c4fe4e.herokuapp.com/)
-- **Production:** [NiibishAki on Heroku](https://niibish-aki-320ea12b7bfc.herokuapp.com/) **NOT IN USE- yet.**
+- **Production:** [NiibishAki on Heroku](https://niibish-aki-320ea12b7bfc.herokuapp.com/)
 
 ## 🔧 Technologies Used
  
